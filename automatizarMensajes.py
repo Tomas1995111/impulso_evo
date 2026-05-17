@@ -6,6 +6,7 @@ from mensajes.mensajeIndices import generar_mensaje_indices
 from mensajes.mensajeAlertaCompra import generar_alerta_aleatoria
 from mensajes.mensajeAlertaCompraArg import generar_alerta_aleatoria_arg
 from mensajes.mensajeCotizacionDolar import generar_cotizacion_dolar
+from mensajes.mensajeResumen import generar_mensaje_resumen
 
 # ── CONFIGURACIÓN MODO TEST ─────────────────────────────────────────────────
 # Ponelo en True para enviar todo al iniciar. En False solo espera sus horarios.
@@ -24,7 +25,7 @@ FREE = "5493814403346-1589836446@g.us"
 MENSAJES_ESPECIALES = {
     "cotizacion_dolar": generar_cotizacion_dolar,
     "resumen_indices": generar_mensaje_indices,
-    # "noticia_mercado": generar_noticia_mercado,
+    "noticia_mercado": generar_mensaje_resumen,
     "alerta_bursatil": generar_alerta_aleatoria,
     "alerta_bursatil_arg": generar_alerta_aleatoria_arg,
     # "reporte_google_sheet":generar_reporte_google_sheet,

@@ -1,4 +1,5 @@
 import yfinance as yf
+yf.set_tz_cache_location("/tmp") # <── Agregá esto para apagar la caché conflictiva
 from datetime import datetime
 
 def generar_mensaje_indices():
