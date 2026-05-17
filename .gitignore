@@ -1,0 +1,21 @@
+# Credenciales y archivos secretos
+mensajes/credenciales.json
+.env
+*.json.local
+
+# Entornos virtuales
+venv/
+.venv/
+env/
+
+# Python (Archivos temporales)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Configuración de editores (VS Code, PyCharm)
+.vscode/
+.idea/
+*.suo
+*.ntvs*

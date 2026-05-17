@@ -1,0 +1,78 @@
+services:
+  evolution_api:
+    image: evoapicloud/evolution-api:latest
+    container_name: impulso_bot_evoapi
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      # SERVER
+      SERVER_URL: http://localhost:8080
+
+      # AUTH
+      AUTHENTICATION_TYPE: apikey
+      AUTHENTICATION_API_KEY: Impulso2025!
+
+      # WHATSAPP WEB VERSION
+      CONFIG_SESSION_PHONE_VERSION: 2.3000.1039597030
+
+      # DATABASE
+      DATABASE_ENABLED: "true"
+      DATABASE_PROVIDER: postgresql
+      DATABASE_CONNECTION_URI: postgresql://root:password@postgres:5432/evolution
+
+      # REDIS
+      REDIS_ENABLED: "true"
+      REDIS_URI: redis://redis:6379
+
+      # CACHE
+      CACHE_REDIS_ENABLED: "true"
+      CACHE_REDIS_URI: redis://redis:6379
+
+      # STORE
+      STORE_MESSAGES: "true"
+      STORE_MESSAGE_UP: "true"
+      STORE_CONTACTS: "true"
+      STORE_CHATS: "true"
+
+      # LOG
+      LOG_LEVEL: ERROR
+
+      # DELAY
+      DELAY_MESSAGES: 1000
+
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - evolution_instances:/evolution/instances
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres_evo
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: evolution
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    restart: always
+    volumes:
+      - redis_data:/data
+
+  bot_programador:
+    build: .
+    container_name: impulso_bot_programador
+    restart: always
+    depends_on:
+      - evolution_api
+
+volumes:
+  postgres_data:
+  redis_data:
+  evolution_instances:
