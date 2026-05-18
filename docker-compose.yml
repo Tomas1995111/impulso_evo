@@ -11,7 +11,7 @@ services:
 
       # AUTH
       AUTHENTICATION_TYPE: apikey
-      AUTHENTICATION_API_KEY: Impulso2025!
+      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY}
 
       # WHATSAPP WEB VERSION
       CONFIG_SESSION_PHONE_VERSION: 2.3000.1039597030
@@ -69,6 +69,9 @@ services:
     build: .
     container_name: impulso_bot_programador
     restart: always
+    env_file: .env
+    environment:
+      - PYTHONUNBUFFERED=1
     depends_on:
       - evolution_api
 

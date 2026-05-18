@@ -3,6 +3,7 @@ import random
 import math
 import datetime
 import time
+import os
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -20,7 +21,7 @@ tickers_arg = [
 ]
 
 # ID de tu hoja de cálculo
-SHEET_ID = "1Z9gfXGPdhBktLMwAIj4KpJ5SI2hDKK5lXG2Z63DaMSI"
+SHEET_ID = os.getenv("SHEET_ID", "1Z9gfXGPdhBktLMwAIj4KpJ5SI2hDKK5lXG2Z63DaMSI")
 
 # Función para guardar en Google Sheets
 def guardar_en_gsheet(fecha, ticker, precio, stop_loss, sheet_id):

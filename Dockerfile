@@ -2,7 +2,7 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Agregá acá yfinance y cualquier otra librería que usen tus módulos de mensajes
-RUN pip install --no-cache-dir apscheduler requests yfinance gspread oauth2client google-genai selenium ddgs chromium
+RUN pip install --no-cache-dir apscheduler requests yfinance gspread oauth2client google-genai python-dotenv selenium ddgs chromium
 
 COPY . .
 

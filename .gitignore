@@ -1,21 +1,61 @@
-# Credenciales y archivos secretos
-mensajes/credenciales.json
+# ===== SEGURIDAD: Archivos con credenciales y secretos =====
 .env
-*.json.local
+.env.local
+.env.*.local
+.env.*.json
+mensajes/credenciales.json
+credenciales*.json
+secrets*.json
+*.key
+*.pem
 
-# Entornos virtuales
+# ===== ENTORNOS VIRTUALES =====
 venv/
 .venv/
 env/
+ENV/
+.virtualenv/
 
-# Python (Archivos temporales)
+# ===== PYTHON (Archivos temporales) =====
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Configuración de editores (VS Code, PyCharm)
+# ===== CONFIGURACIÓN DE EDITORES =====
 .vscode/
 .idea/
 *.suo
 *.ntvs*
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ===== LOGS Y ARCHIVOS TEMPORALES =====
+*.log
+log_bot*.log
+*.tmp
+.coverage
+htmlcov/
+
+# ===== DOCKER =====
+.dockerignore

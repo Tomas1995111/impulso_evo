@@ -7,16 +7,17 @@ import os
 
 # Inicializar el cliente oficial de GenAI
 print("⚙️ [Inicialización] Configurando cliente de Gemini...", flush=True)
-client = genai.Client(api_key="AIzaSyBYu0Zy3UrKI7wD0woYjtNVB_TQKketgyw")
+gemini_api_key = os.getenv("GEMINI_API_KEY")
+if not gemini_api_key:
+    raise ValueError("❌ GEMINI_API_KEY no está configurada en las variables de entorno")
+client = genai.Client(api_key=gemini_api_key)
 
 # =========================
 # Configuración de LOG
 # =========================
-vm_log_dir = r"Z:\Proyectos\impulso_wsp_bot\LogVM"
-if os.path.exists(vm_log_dir):
-    log_path = os.path.join(vm_log_dir, "log_bot.log")
-else:
-    log_path = os.path.join(os.getcwd(), "log_bot_local.log")
+log_dir = os.getenv("LOG_DIR", "./logs")
+os.makedirs(log_dir, exist_ok=True)
+log_path = os.path.join(log_dir, "log_bot.log")
 
 def _log_line(msg: str):
     linea = f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}\n"
@@ -146,14 +147,24 @@ def procesar_con_gemini(html_crudo):
 # =========================
 # Función principal (La que llama tu bot)
 # =========================
-def generar_mensaje_resumen():
+def generar_mensaje_resumen(test_url: str = None):
+    """Genera el resumen de mercado.
+
+    Si se provee `test_url`, se usará esa URL directamente (modo test). Si no, se
+    intentará localizar la nota en el sitemap de CNBC como antes.
+    """
     print("\n🏁 [Inicio] Ejecutando generar_mensaje_resumen()...", flush=True)
     try:
-        # Busca el link directo en el mapa de sitio
-        url = esperar_y_buscar_url()
-        if not url:
-            _log_line("🛑 [Fin] No se envió nada porque no se encontró la nota en el sitemap de CNBC.")
-            return None
+        # Si estamos en modo test y recibimos una URL de prueba, la usamos
+        if test_url:
+            url = test_url
+            print(f"🧪 [Test] Usando URL de prueba: {url}", flush=True)
+        else:
+            # Busca el link directo en el mapa de sitio
+            url = esperar_y_buscar_url()
+            if not url:
+                _log_line("🛑 [Fin] No se envió nada porque no se encontró la nota en el sitemap de CNBC.")
+                return None
 
         # 1. Bajamos el código de la página directo
         html_crudo = extraer_html_crudo(url)

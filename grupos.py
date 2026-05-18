@@ -1,7 +1,11 @@
 import requests
+import os
 
-URL_GRUPOS = "http://localhost:8080/group/fetchAllGroups/Impulso?getParticipants=false"
-HEADERS = {"apikey": "Impulso2025!"}
+EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "http://localhost:8080")
+EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY")
+EVOLUTION_INSTANCE_NAME = os.getenv("EVOLUTION_INSTANCE_NAME", "Impulso")
+URL_GRUPOS = f"{EVOLUTION_API_URL}/group/fetchAllGroups/{EVOLUTION_INSTANCE_NAME}?getParticipants=false"
+HEADERS = {"apikey": EVOLUTION_API_KEY}
 
 try:
     res = requests.get(URL_GRUPOS, headers=HEADERS)
