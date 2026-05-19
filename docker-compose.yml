@@ -74,6 +74,11 @@ services:
       - PYTHONUNBUFFERED=1
     depends_on:
       - evolution_api
+    volumes:
+      # Mantiene el estado de los mensajes mezclados aunque hagas "docker build"
+      - ./estado_mensajes.json:/app/estado_mensajes.json
+      # Te permite agregar/editar los JSON de mensajes desde afuera sin reiniciar o buildear
+      - ./contenido:/app/contenido
 
 volumes:
   postgres_data:

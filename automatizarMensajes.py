@@ -1,6 +1,8 @@
 import time
 import requests
 import os
+import json
+import random
 from datetime import datetime
 from apscheduler.schedulers.blocking import BlockingScheduler
 from mensajes.mensajeIndices import generar_mensaje_indices
@@ -11,7 +13,7 @@ from mensajes.mensajeResumen import generar_mensaje_resumen
 
 # ── CONFIGURACIÓN MODO TEST ─────────────────────────────────────────────────
 # Ponelo en True para enviar todo al iniciar. En False solo espera sus horarios.
-EJECUTAR_TEST_AL_INICIO = False  
+EJECUTAR_TEST_AL_INICIO = True  
 
 # ── Configuración API ────────────────────────────────────────────────────────
 EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "http://evolution_api:8080")
@@ -26,6 +28,55 @@ REVISION = os.getenv("GRUPO_REVISION")
 PREMIUM = os.getenv("GRUPO_PREMIUM")
 FREE = os.getenv("GRUPO_FREE")
 
+
+# ── Lógica de Mensajes Dinámicos (Rotativos persistentes) ───────────────────
+def obtener_siguiente_mensaje_dinamico(tipo_mensaje):
+    """
+    Tipos válidos: 'miercoles', 'viernes', 'motivacionales'
+    Lee el estado actual, envía el que corresponde y avanza el índice.
+    Si se terminan, vuelve a mezclar automáticamente.
+    """
+    archivo_contenido = f"contenido/{tipo_mensaje}.json"
+    archivo_estado = "estado_mensajes.json"
+    
+    # 1. Cargar el contenido base
+    with open(archivo_contenido, "r", encoding="utf-8") as f:
+        mensajes_base = json.load(f)
+        
+    # 2. Cargar o inicializar el estado
+    try:
+        with open(archivo_estado, "r", encoding="utf-8") as f:
+            estado = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        estado = {}
+
+    # 3. Si no existe el estado para este tipo o se terminaron los mensajes, inicializar/mezclar
+    if tipo_mensaje not in estado or estado[tipo_mensaje]["proximo_indice"] >= len(estado[tipo_mensaje]["lista_mezclada"]):
+        indices_mezclados = list(range(len(mensajes_base)))
+        random.shuffle(indices_mezclados)
+        
+        estado[tipo_mensaje] = {
+            "lista_mezclada": indices_mezclados,
+            "proximo_indice": 0
+        }
+        print(f"[INFO] Lista de '{tipo_mensaje}' mezclada de nuevo de forma aleatoria.")
+
+    # 4. Obtener el mensaje actual usando el índice guardado
+    info_tipo = estado[tipo_mensaje]
+    lista_ordenada_actual = info_tipo["lista_mezclada"]
+    idx_actual_en_base = lista_ordenada_actual[info_tipo["proximo_indice"]]
+    
+    mensaje_a_enviar = mensajes_base[idx_actual_en_base]
+    
+    # 5. Actualizar el estado para el PRÓXIMO envío
+    info_tipo["proximo_indice"] += 1
+    
+    with open(archivo_estado, "w", encoding="utf-8") as f:
+        json.dump(estado, f, indent=4, ensure_ascii=False)
+        
+    return mensaje_a_enviar
+
+
 # ── Resolver de mensajes especiales ──────────────────────────────────────────
 MENSAJES_ESPECIALES = {
     "cotizacion_dolar": generar_cotizacion_dolar,
@@ -34,6 +85,9 @@ MENSAJES_ESPECIALES = {
     "alerta_bursatil": generar_alerta_aleatoria,
     "alerta_bursatil_arg": generar_alerta_aleatoria_arg,
     # "reporte_google_sheet":generar_reporte_google_sheet,
+    "dinamico_miercoles": lambda: obtener_siguiente_mensaje_dinamico("miercoles"),
+    "dinamico_viernes": lambda: obtener_siguiente_mensaje_dinamico("viernes"),
+    "dinamico_motivacional": lambda: obtener_siguiente_mensaje_dinamico("motivacionales"),
 }
 
 # URL de prueba para el modo test (se puede sobreescribir con TEST_PREMARKET_URL en .env)
@@ -63,38 +117,24 @@ def resolver_mensaje(texto, test_mode: bool = False, test_url: str = None):
 
 # ── Mensajes programados
 mensajes_semana = [
-    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "08:55", "mensaje": "💪 *Muy buenos días, Impulsores.*\nHoy es una nueva oportunidad para seguir creciendo juntos.", "grupo": [BACKUP]},
-    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "09:03", "mensaje": "resumen_indices", "grupo": [BACKUP]},
-    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "09:11", "mensaje": "noticia_mercado", "grupo": [BACKUP]},
-    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:00", "mensaje": "alerta_bursatil", "grupo": [BACKUP]},
-    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:05", "mensaje": "alerta_bursatil", "grupo": [BACKUP]},
-    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:10", "mensaje": "alerta_bursatil_arg", "grupo": [BACKUP]},
-    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:15", "mensaje": "alerta_bursatil_arg", "grupo": [BACKUP]},
-    {"dias": ["mon"], "hora": "13:30", "mensaje": "💰 *¡No te olvides de caucionar lo líquido este finde semana!*", "grupo": [BACKUP]},
-    {"dias": ["mon"], "hora": "16:00", "mensaje": "🎁 *¡Invitá a un amigo y ganan los dos!*\n\nSi alguien se suscribe con este link 👇\nhttps://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=2c9380847596cf970175ae9482893205\n*y nos dice que vos lo invitaste*, te bonificamos *tu próximo pago* 💸\n\n👥 *¿Cómo funciona?*\n1️⃣ Compartí el link con quien creas que le puede servir\n2️⃣ Cuando se sume, que nos escriba: *\"Me invitó Juan\"*\n3️⃣ ¡Ambos reciben *30 días gratis*!\n\n📩 *Ante cualquier duda, escribime por privado.*", "grupo": [BACKUP]},
-    {"dias": ["mon"], "hora": "00:11", "mensaje": "cotizacion_dolar", "grupo": [BACKUP]},
+    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "09:00", "mensaje": "💪 *Muy buenos días, Impulsores.*\nHoy es una nueva oportunidad para seguir creciendo juntos.", "grupo": [PREMIUM]},
+    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "09:00", "mensaje": "resumen_indices", "grupo": [PREMIUM]},
+    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "09:00", "mensaje": "noticia_mercado", "grupo": [PREMIUM]},
+    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:00", "mensaje": "alerta_bursatil", "grupo": [REVISION]},
+    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:00", "mensaje": "alerta_bursatil", "grupo": [REVISION]},
+    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:00", "mensaje": "alerta_bursatil_arg", "grupo": [REVISION]},
+    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:00", "mensaje": "alerta_bursatil_arg", "grupo": [REVISION]},
+    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "15:30", "mensaje": "cotizacion_dolar", "grupo": [PREMIUM]},
+    {"dias": ["tue"], "hora": "15:30", "mensaje": "dinamico_motivacional", "grupo": [PREMIUM]},
+    {"dias": ["wed"], "hora": "15:30", "mensaje": "dinamico_miercoles", "grupo": [PREMIUM]},
+    {"dias": ["fri"], "hora": "15:30", "mensaje": "dinamico_viernes", "grupo": [PREMIUM]},
+    {"dias": ["fri"], "hora": "13:30", "mensaje": "💰 *¡No te olvides de caucionar lo líquido este finde semana!*", "grupo": [PREMIUM]},
+    {"dias": ["tue"], "hora": "16:00", "mensaje": "🎁 *¡Invitá a un amigo y ganan los dos!*\n\nSi alguien se suscribe con este link 👇\nhttps://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=2c9380847596cf970175ae9482893205\n*y nos dice que vos lo invitaste*, te bonificamos *tu próximo pago* 💸\n\n👥 *¿Cómo funciona?*\n1️⃣ Compartí el link con quien creas que le puede servir\n2️⃣ Cuando se sume, que nos escriba: *\"Me invitó Juan\"*\n3️⃣ ¡Ambos reciben *30 días gratis*!\n\n📩 *Ante cualquier duda, escribime por privado.*", "grupo": [PREMIUM]},
 ]
 
 mensajes_fecha = [
-    {"fecha": "18/05/2026 12:00", "mensaje": "📢 *Aviso Feriado:* La Bolsa estará cerrada.", "grupo": [BACKUP]}
+    {"fecha": "13/06/2025 12:20", "mensaje": "📢 *Aviso Feriado:*\n" "El lunes 16/06 la Bolsa de Buenos Aires estará cerrada por el feriado en conmemoración del Gral. Güemes.", "grupo": [PREMIUM]},
 ]
-
-# mensajes_semana = [
-#     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "08:55", "mensaje": "💪 *Muy buenos días, Impulsores.*\nHoy es una nueva oportunidad para seguir creciendo juntos.", "grupo": [PREMIUM, FREE, BACKUP]},
-#     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "09:03", "mensaje": "resumen_indices", "grupo": [PREMIUM, FREE, BACKUP]},
-#     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "09:11", "mensaje": "noticia_mercado", "grupo": [PREMIUM, FREE, BACKUP]},
-#     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:00", "mensaje": "alerta_bursatil", "grupo": [REVISION, BACKUP]},
-#     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:05", "mensaje": "alerta_bursatil", "grupo": [REVISION, BACKUP]},
-#     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:10", "mensaje": "alerta_bursatil_arg", "grupo": [REVISION, BACKUP]},
-#     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:15", "mensaje": "alerta_bursatil_arg", "grupo": [REVISION, BACKUP]},
-#     {"dias": ["fri"], "hora": "13:30", "mensaje": "💰 *¡No te olvides de caucionar lo líquido este finde semana!*", "grupo": [PREMIUM, FREE, BACKUP]},
-#     {"dias": ["tue"], "hora": "19:00", "mensaje": "🎁 *¡Invitá a un amigo y ganan los dos!*\n\nSi alguien se suscribe con este link 👇\nhttps://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=2c9380847596cf970175ae9482893205\n*y nos dice que vos lo invitaste*, te bonificamos *tu próximo pago* 💸\n\n👥 *¿Cómo funciona?*\n1️⃣ Compartí el link con quien creas que le puede servir\n2️⃣ Cuando se sume, que nos escriba: *\"Me invitó Juan\"*\n3️⃣ ¡Ambos reciben *30 días gratis*!\n\n📩 *Ante cualquier duda, escribime por privado.*", "grupo": [PREMIUM, FREE, BACKUP]},
-#     {"dias": ["fri"], "hora": "00:11", "mensaje": "cotizacion_dolar", "grupo": [PREMIUM, FREE, BACKUP]},
-# ]
-
-# mensajes_fecha = [
-#     {"fecha": "27/05/2026 12:00", "mensaje": "📢 *Aviso Feriado:* La Bolsa estará cerrada.", "grupo": [PREMIUM, FREE, BACKUP]}
-# ]
 
 # ── Envío ────────────────────────────────────────────────────────────────────
 def enviar_mensaje(grupo, clave_o_texto, test_mode: bool = False, test_url: str = None):
