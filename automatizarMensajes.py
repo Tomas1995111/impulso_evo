@@ -13,7 +13,7 @@ from mensajes.mensajeResumen import generar_mensaje_resumen
 
 # ── CONFIGURACIÓN MODO TEST ─────────────────────────────────────────────────
 # Ponelo en True para enviar todo al iniciar. En False solo espera sus horarios.
-EJECUTAR_TEST_AL_INICIO = True  
+EJECUTAR_TEST_AL_INICIO = False  
 
 # ── Configuración API ────────────────────────────────────────────────────────
 EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "http://evolution_api:8080")
