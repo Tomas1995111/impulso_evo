@@ -38,8 +38,6 @@ def buscar_url_en_sitemap():
     que coincida con la fecha indicada.
     """
     # ── CONFIGURACIÓN DE FECHA ───────────────────────────────────────────────
-    # HOY DOMINGO: Dejamos fija la fecha del viernes para tu test inicial.
-    # fecha_filtro = "2026/05/15"
     
     # MAÑANA LUNES: Descomentá esta línea de abajo para que sea automático:
     fecha_filtro = time.strftime("%Y/%m/%d")

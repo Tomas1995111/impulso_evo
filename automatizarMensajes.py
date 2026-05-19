@@ -11,7 +11,7 @@ from mensajes.mensajeResumen import generar_mensaje_resumen
 
 # ── CONFIGURACIÓN MODO TEST ─────────────────────────────────────────────────
 # Ponelo en True para enviar todo al iniciar. En False solo espera sus horarios.
-EJECUTAR_TEST_AL_INICIO = True  
+EJECUTAR_TEST_AL_INICIO = False  
 
 # ── Configuración API ────────────────────────────────────────────────────────
 EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "http://evolution_api:8080")
@@ -63,21 +63,38 @@ def resolver_mensaje(texto, test_mode: bool = False, test_url: str = None):
 
 # ── Mensajes programados
 mensajes_semana = [
-    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "08:55", "mensaje": "💪 *Muy buenos días, Impulsores.*\nHoy es una nueva oportunidad para seguir creciendo juntos.", "grupo": [PREMIUM, FREE, BACKUP]},
-    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "09:03", "mensaje": "resumen_indices", "grupo": [PREMIUM, FREE, BACKUP]},
-    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "09:11", "mensaje": "noticia_mercado", "grupo": [PREMIUM, FREE, BACKUP]},
-    # {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:00", "mensaje": "alerta_bursatil", "grupo": [REVISION, BACKUP]},
-    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:05", "mensaje": "alerta_bursatil", "grupo": [REVISION, BACKUP]},
-    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:10", "mensaje": "alerta_bursatil_arg", "grupo": [REVISION, BACKUP]},
-    # {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:15", "mensaje": "alerta_bursatil_arg", "grupo": [REVISION, BACKUP]},
-    # {"dias": ["fri"], "hora": "13:30", "mensaje": "💰 *¡No te olvides de caucionar lo líquido este finde semana!*", "grupo": [PREMIUM, FREE, BACKUP]},
-    # {"dias": ["tue"], "hora": "19:00", "mensaje": "🎁 *¡Invitá a un amigo y ganan los dos!*\n\nSi alguien se suscribe con este link 👇\nhttps://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=2c9380847596cf970175ae9482893205\n*y nos dice que vos lo invitaste*, te bonificamos *tu próximo pago* 💸\n\n👥 *¿Cómo funciona?*\n1️⃣ Compartí el link con quien creas que le puede servir\n2️⃣ Cuando se sume, que nos escriba: *\"Me invitó Juan\"*\n3️⃣ ¡Ambos reciben *30 días gratis*!\n\n📩 *Ante cualquier duda, escribime por privado.*", "grupo": [PREMIUM, FREE, BACKUP]},
-    {"dias": ["fri"], "hora": "00:11", "mensaje": "cotizacion_dolar", "grupo": [PREMIUM, FREE, BACKUP]},
+    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "08:55", "mensaje": "💪 *Muy buenos días, Impulsores.*\nHoy es una nueva oportunidad para seguir creciendo juntos.", "grupo": [BACKUP]},
+    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "09:03", "mensaje": "resumen_indices", "grupo": [BACKUP]},
+    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "09:11", "mensaje": "noticia_mercado", "grupo": [BACKUP]},
+    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:00", "mensaje": "alerta_bursatil", "grupo": [BACKUP]},
+    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:05", "mensaje": "alerta_bursatil", "grupo": [BACKUP]},
+    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:10", "mensaje": "alerta_bursatil_arg", "grupo": [BACKUP]},
+    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:15", "mensaje": "alerta_bursatil_arg", "grupo": [BACKUP]},
+    {"dias": ["mon"], "hora": "13:30", "mensaje": "💰 *¡No te olvides de caucionar lo líquido este finde semana!*", "grupo": [BACKUP]},
+    {"dias": ["mon"], "hora": "16:00", "mensaje": "🎁 *¡Invitá a un amigo y ganan los dos!*\n\nSi alguien se suscribe con este link 👇\nhttps://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=2c9380847596cf970175ae9482893205\n*y nos dice que vos lo invitaste*, te bonificamos *tu próximo pago* 💸\n\n👥 *¿Cómo funciona?*\n1️⃣ Compartí el link con quien creas que le puede servir\n2️⃣ Cuando se sume, que nos escriba: *\"Me invitó Juan\"*\n3️⃣ ¡Ambos reciben *30 días gratis*!\n\n📩 *Ante cualquier duda, escribime por privado.*", "grupo": [BACKUP]},
+    {"dias": ["mon"], "hora": "00:11", "mensaje": "cotizacion_dolar", "grupo": [BACKUP]},
 ]
 
 mensajes_fecha = [
-    {"fecha": "27/05/2026 12:00", "mensaje": "📢 *Aviso Feriado:* La Bolsa estará cerrada.", "grupo": [PREMIUM, FREE, BACKUP]}
+    {"fecha": "18/05/2026 12:00", "mensaje": "📢 *Aviso Feriado:* La Bolsa estará cerrada.", "grupo": [BACKUP]}
 ]
+
+# mensajes_semana = [
+#     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "08:55", "mensaje": "💪 *Muy buenos días, Impulsores.*\nHoy es una nueva oportunidad para seguir creciendo juntos.", "grupo": [PREMIUM, FREE, BACKUP]},
+#     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "09:03", "mensaje": "resumen_indices", "grupo": [PREMIUM, FREE, BACKUP]},
+#     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "09:11", "mensaje": "noticia_mercado", "grupo": [PREMIUM, FREE, BACKUP]},
+#     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:00", "mensaje": "alerta_bursatil", "grupo": [REVISION, BACKUP]},
+#     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:05", "mensaje": "alerta_bursatil", "grupo": [REVISION, BACKUP]},
+#     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:10", "mensaje": "alerta_bursatil_arg", "grupo": [REVISION, BACKUP]},
+#     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:15", "mensaje": "alerta_bursatil_arg", "grupo": [REVISION, BACKUP]},
+#     {"dias": ["fri"], "hora": "13:30", "mensaje": "💰 *¡No te olvides de caucionar lo líquido este finde semana!*", "grupo": [PREMIUM, FREE, BACKUP]},
+#     {"dias": ["tue"], "hora": "19:00", "mensaje": "🎁 *¡Invitá a un amigo y ganan los dos!*\n\nSi alguien se suscribe con este link 👇\nhttps://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=2c9380847596cf970175ae9482893205\n*y nos dice que vos lo invitaste*, te bonificamos *tu próximo pago* 💸\n\n👥 *¿Cómo funciona?*\n1️⃣ Compartí el link con quien creas que le puede servir\n2️⃣ Cuando se sume, que nos escriba: *\"Me invitó Juan\"*\n3️⃣ ¡Ambos reciben *30 días gratis*!\n\n📩 *Ante cualquier duda, escribime por privado.*", "grupo": [PREMIUM, FREE, BACKUP]},
+#     {"dias": ["fri"], "hora": "00:11", "mensaje": "cotizacion_dolar", "grupo": [PREMIUM, FREE, BACKUP]},
+# ]
+
+# mensajes_fecha = [
+#     {"fecha": "27/05/2026 12:00", "mensaje": "📢 *Aviso Feriado:* La Bolsa estará cerrada.", "grupo": [PREMIUM, FREE, BACKUP]}
+# ]
 
 # ── Envío ────────────────────────────────────────────────────────────────────
 def enviar_mensaje(grupo, clave_o_texto, test_mode: bool = False, test_url: str = None):
