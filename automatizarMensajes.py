@@ -3,7 +3,7 @@ import requests
 import os
 import json
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 from apscheduler.schedulers.blocking import BlockingScheduler
 from mensajes.mensajeIndices import generar_mensaje_indices
 from mensajes.mensajeAlertaCompra import generar_alerta_aleatoria
@@ -76,6 +76,19 @@ def obtener_siguiente_mensaje_dinamico(tipo_mensaje):
         
     return mensaje_a_enviar
 
+def generar_mensaje_vencimiento():
+    hoy = datetime.now()
+    manana = hoy + timedelta(days=1)
+    
+    str_hoy = hoy.strftime('%d/%m')
+    str_manana = manana.strftime('%d/%m')
+    
+    return (
+        "📢 *Vencimiento de Opciones*\n"
+        f"📅 Mañana, viernes {str_manana}, se produce el vencimiento mensual de opciones.\n"
+        f"⚠️ Recuerde que pueden negociarse hasta hoy (jueves {str_hoy}) a las 15:30 hs y ejercerse en cualquier momento."
+    )
+
 
 # ── Resolver de mensajes especiales ──────────────────────────────────────────
 MENSAJES_ESPECIALES = {
@@ -88,6 +101,7 @@ MENSAJES_ESPECIALES = {
     "dinamico_miercoles": lambda: obtener_siguiente_mensaje_dinamico("miercoles"),
     "dinamico_viernes": lambda: obtener_siguiente_mensaje_dinamico("viernes"),
     "dinamico_motivacional": lambda: obtener_siguiente_mensaje_dinamico("motivacionales"),
+    "vencimiento_opciones": generar_mensaje_vencimiento,
 }
 
 # URL de prueba para el modo test (se puede sobreescribir con TEST_PREMARKET_URL en .env)
@@ -200,6 +214,11 @@ if EJECUTAR_TEST_AL_INICIO:
         else:
             enviar_mensaje(GRUPO_DEFAULT, msg["mensaje"], test_mode=EJECUTAR_TEST_AL_INICIO)
         time.sleep(2)
+    
+    # 3. Test de vencimiento de opciones
+    print("📢 Probando vencimiento de opciones...")
+    enviar_mensaje(GRUPO_DEFAULT, "vencimiento_opciones", test_mode=EJECUTAR_TEST_AL_INICIO)
+    time.sleep(2)
         
     print("✅ Fin del test inicial.")
 
@@ -229,6 +248,17 @@ for msg in mensajes_fecha:
             run_date=fecha_dt,
             args=[grupo, msg["mensaje"]]
         )
+
+# Regla del vencimiento de opciones
+scheduler.add_job(
+    enviar_mensaje,
+    "cron",
+    day="14-20",         
+    day_of_week="thu",   
+    hour=11,              
+    minute=0,            
+    args=[PREMIUM, "vencimiento_opciones"] 
+)
 
 print("⏰ Planificador iniciado. Esperando horarios...")
 scheduler.start()
