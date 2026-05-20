@@ -147,7 +147,20 @@ mensajes_semana = [
 ]
 
 mensajes_fecha = [
-    {"fecha": "13/06/2025 12:20", "mensaje": "📢 *Aviso Feriado:*\n" "El lunes 16/06 la Bolsa de Buenos Aires estará cerrada por el feriado en conmemoración del Gral. Güemes.", "grupo": [PREMIUM]},
+    {"fecha": "22/05/2026 12:20", "mensaje": "📢 *Aviso Feriado:*\nEl lunes 25/05 ambas bolsas estarán cerradas. La Bolsa de Buenos Aires por el Día de la Revolución de Mayo y la Bolsa de Nueva York por el Día de los Caídos.", "grupo": [PREMIUM]},
+    {"fecha": "12/06/2026 12:20", "mensaje": "📢 *Aviso Feriado:*\nEl lunes 15/06 la Bolsa de Buenos Aires estará cerrada por el feriado en conmemoración del Gral. Güemes.", "grupo": [PREMIUM]},
+    {"fecha": "18/06/2026 12:20", "mensaje": "📢 *Aviso Feriado:*\nEl viernes 19/06 la Bolsa de Nueva York estará cerrada por el feriado de Juneteenth.", "grupo": [PREMIUM]},
+    {"fecha": "02/07/2026 12:20", "mensaje": "📢 *Aviso Feriado:*\nEl viernes 03/07 la Bolsa de Nueva York estará cerrada por el Primer Grito de Independencia.", "grupo": [PREMIUM]},
+    {"fecha": "08/07/2026 12:20", "mensaje": "📢 *Aviso Feriado:*\nEl jueves 09/07 y viernes 10/07 la Bolsa de Buenos Aires estará cerrada (Día de la Independencia y Fines Turísticos).", "grupo": [PREMIUM]},
+    {"fecha": "14/08/2026 12:20", "mensaje": "📢 *Aviso Feriado:*\nEl lunes 17/08 la Bolsa de Buenos Aires estará cerrada (Paso a la Inmortalidad del Gral. San Martín).", "grupo": [PREMIUM]},
+    {"fecha": "04/09/2026 12:20", "mensaje": "📢 *Aviso Feriado:*\nEl lunes 07/09 la Bolsa de Nueva York estará cerrada por el Día del Trabajo.", "grupo": [PREMIUM]},
+    {"fecha": "09/10/2026 12:20", "mensaje": "📢 *Aviso Feriado:*\nEl lunes 12/10 la Bolsa de Buenos Aires estará cerrada por el Día del Respeto a la Diversidad Cultural.", "grupo": [PREMIUM]},
+    {"fecha": "05/11/2026 12:20", "mensaje": "📢 *Aviso Feriado:*\nEl viernes 06/11 la Bolsa de Buenos Aires estará cerrada por el Día del Bancario.", "grupo": [PREMIUM]},
+    {"fecha": "20/11/2026 12:20", "mensaje": "📢 *Aviso Feriado:*\nEl lunes 23/11 la Bolsa de Buenos Aires estará cerrada por el Día de la Soberanía Nacional.", "grupo": [PREMIUM]},
+    {"fecha": "25/11/2026 12:20", "mensaje": "📢 *Aviso Feriado:*\nEl jueves 26/11 la Bolsa de Nueva York estará cerrada (Día de Acción de Gracias). El viernes 27/11 operará con horario reducido, cerrando temprano a las 13:00.", "grupo": [PREMIUM]},
+    {"fecha": "04/12/2026 12:20", "mensaje": "📢 *Aviso Feriado:*\nEl lunes 07/12 y martes 08/12 la Bolsa de Buenos Aires estará cerrada (Fines Turísticos e Inmaculada Concepción de María).", "grupo": [PREMIUM]},
+    {"fecha": "23/12/2026 12:20", "mensaje": "📢 *Aviso Feriado:*\nEl jueves 24/12 la Bolsa de Buenos Aires estará cerrada (Nochebuena) y Nueva York operará con cierre temprano a las 13:00. El viernes 25/12 ambas bolsas estarán cerradas por Navidad.", "grupo": [PREMIUM]},
+    {"fecha": "30/12/2026 12:20", "mensaje": "📢 *Aviso Feriado:*\nEl jueves 31/12 la Bolsa de Buenos Aires estará cerrada.", "grupo": [PREMIUM]}
 ]
 
 # ── Envío ────────────────────────────────────────────────────────────────────
