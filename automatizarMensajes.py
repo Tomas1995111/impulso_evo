@@ -139,11 +139,11 @@ mensajes_semana = [
     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:00", "mensaje": "alerta_bursatil_arg", "grupo": [REVISION]},
     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:00", "mensaje": "alerta_bursatil_arg", "grupo": [REVISION]},
     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "15:30", "mensaje": "cotizacion_dolar", "grupo": [PREMIUM]},
-    {"dias": ["tue"], "hora": "15:30", "mensaje": "dinamico_motivacional", "grupo": [PREMIUM]},
-    {"dias": ["wed"], "hora": "15:30", "mensaje": "dinamico_miercoles", "grupo": [PREMIUM]},
-    {"dias": ["fri"], "hora": "15:30", "mensaje": "dinamico_viernes", "grupo": [PREMIUM]},
     {"dias": ["fri"], "hora": "13:30", "mensaje": "💰 *¡No te olvides de caucionar lo líquido este finde semana!*", "grupo": [PREMIUM]},
     {"dias": ["tue"], "hora": "16:00", "mensaje": "🎁 *¡Invitá a un amigo y ganan los dos!*\n\nSi alguien se suscribe con este link 👇\nhttps://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=2c9380847596cf970175ae9482893205\n*y nos dice que vos lo invitaste*, te bonificamos *tu próximo pago* 💸\n\n👥 *¿Cómo funciona?*\n1️⃣ Compartí el link con quien creas que le puede servir\n2️⃣ Cuando se sume, que nos escriba: *\"Me invitó Juan\"*\n3️⃣ ¡Ambos reciben *30 días gratis*!\n\n📩 *Ante cualquier duda, escribime por privado.*", "grupo": [PREMIUM]},
+    {"dias": ["tue"], "hora": "17:30", "mensaje": "dinamico_motivacional", "grupo": [PREMIUM]},
+    {"dias": ["wed"], "hora": "17:30", "mensaje": "dinamico_miercoles", "grupo": [PREMIUM]},
+    {"dias": ["fri"], "hora": "17:30", "mensaje": "dinamico_viernes", "grupo": [PREMIUM]},
 ]
 
 mensajes_fecha = [
