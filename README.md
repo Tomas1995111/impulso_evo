@@ -15,4 +15,8 @@ docker compose down
 docker logs -f impulso_bot_programador
 
 
+como ver los grupos
+
+docker compose exec bot_programador python grupos.py
+
 
