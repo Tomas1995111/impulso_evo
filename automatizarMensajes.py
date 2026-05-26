@@ -131,9 +131,9 @@ def resolver_mensaje(texto, test_mode: bool = False, test_url: str = None):
 
 # ── Mensajes programados
 mensajes_semana = [
-    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "09:00", "mensaje": "💪 *Muy buenos días, Impulsores.*\nHoy es una nueva oportunidad para seguir creciendo juntos.", "grupo": [PREMIUM]},
-    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "09:00", "mensaje": "resumen_indices", "grupo": [PREMIUM]},
-    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "09:00", "mensaje": "noticia_mercado", "grupo": [PREMIUM]},
+    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "09:30", "mensaje": "💪 *Muy buenos días, Impulsores.*\nHoy es una nueva oportunidad para seguir creciendo juntos.", "grupo": [PREMIUM]},
+    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "09:30", "mensaje": "resumen_indices", "grupo": [PREMIUM]},
+    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "09:30", "mensaje": "noticia_mercado", "grupo": [PREMIUM]},
     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:02", "mensaje": "alerta_bursatil", "grupo": [REVISION]},
     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:02", "mensaje": "alerta_bursatil", "grupo": [REVISION]},
     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:02", "mensaje": "alerta_bursatil_arg", "grupo": [REVISION]},

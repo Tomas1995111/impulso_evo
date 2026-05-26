@@ -74,7 +74,7 @@ def buscar_url_en_sitemap():
         print(f"❌ [Sitemap] Error de red consultando el archivo XML: {e}", flush=True)
         return None
 
-def esperar_y_buscar_url(max_espera_min=100, intervalo_min=5):
+def esperar_y_buscar_url(max_espera_min=70, intervalo_min=5):
     inicio = time.time()
     intento = 0
     print(f"⏱️ [Planificador] Iniciando rutina de espera del sitemap. Límite: {max_espera_min} minutos.", flush=True)
