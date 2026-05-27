@@ -155,7 +155,7 @@ async def messages_upsert(request: Request) -> dict:
         origen = store.get_origen(phone) or ""
         
         # Forzamos la hora actual menos 3 horas directamente
-        fecha_captura = (datetime.utcnow() - timedelta(hours=3)).strftime("%d/%m/%Y %H:%M")
+        fecha_captura = datetime.now().strftime("%d/%m/%Y %H:%M")
 
         # Agregar al grupo Trial
         trial_group = config.TRIAL_GROUP_JID
