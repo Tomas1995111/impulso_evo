@@ -6,41 +6,23 @@ services:
     ports:
       - "8080:8080"
     environment:
-      # SERVER
       SERVER_URL: http://localhost:8080
-
-      # AUTH
       AUTHENTICATION_TYPE: apikey
       AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY}
-
-      # WHATSAPP WEB VERSION
       CONFIG_SESSION_PHONE_VERSION: 2.3000.1039597030
-
-      # DATABASE
       DATABASE_ENABLED: "true"
       DATABASE_PROVIDER: postgresql
       DATABASE_CONNECTION_URI: postgresql://root:password@postgres:5432/evolution
-
-      # REDIS
       REDIS_ENABLED: "true"
       REDIS_URI: redis://redis:6379
-
-      # CACHE
       CACHE_REDIS_ENABLED: "true"
       CACHE_REDIS_URI: redis://redis:6379
-
-      # STORE
       STORE_MESSAGES: "true"
       STORE_MESSAGE_UP: "true"
       STORE_CONTACTS: "true"
       STORE_CHATS: "true"
-
-      # LOG
       LOG_LEVEL: ERROR
-
-      # DELAY
       DELAY_MESSAGES: 1000
-
     depends_on:
       - postgres
       - redis
@@ -65,20 +47,35 @@ services:
     volumes:
       - redis_data:/data
 
-  bot_programador:
+  bot:
     build: .
-    container_name: impulso_bot_programador
+    container_name: impulso_bot
     restart: always
+    command: ["python", "-u", "run_broadcast.py"]
     env_file: .env
     environment:
       - PYTHONUNBUFFERED=1
     depends_on:
       - evolution_api
     volumes:
-      # Mantiene el estado de los mensajes mezclados aunque hagas "docker build"
       - ./estado_mensajes.json:/app/estado_mensajes.json
-      # Te permite agregar/editar los JSON de mensajes desde afuera sin reiniciar o buildear
       - ./contenido:/app/contenido
+
+  bot_inbound:
+    build: .
+    container_name: impulso_bot_inbound
+    restart: always
+    command: ["python", "-u", "run_inbound.py"]
+    env_file: .env
+    environment:
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "8000:8000"
+    depends_on:
+      - evolution_api
+      - redis
+    volumes:
+      - ./mensajes/credenciales.json:/app/mensajes/credenciales.json:ro
 
 volumes:
   postgres_data:

@@ -1,11 +1,12 @@
 import requests
-import os
 
-EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "http://evolution_api:8080")
-EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY")
-EVOLUTION_INSTANCE_NAME = os.getenv("EVOLUTION_INSTANCE_NAME", "Impulso")
-URL_GRUPOS = f"{EVOLUTION_API_URL}/group/fetchAllGroups/{EVOLUTION_INSTANCE_NAME}?getParticipants=false"
-HEADERS = {"apikey": EVOLUTION_API_KEY}
+from core import config
+
+URL_GRUPOS = (
+    f"{config.EVOLUTION_API_URL}/group/fetchAllGroups/"
+    f"{config.EVOLUTION_INSTANCE_NAME}?getParticipants=false"
+)
+HEADERS = {"apikey": config.EVOLUTION_API_KEY}
 
 try:
     res = requests.get(URL_GRUPOS, headers=HEADERS)

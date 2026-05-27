@@ -1,129 +1,65 @@
 # Impulso Evo
 
-Bot automatizado para envío de mensajes en WhatsApp con alertas de mercado, cotizaciones y mensajes programados.
+Bot de WhatsApp para envío de mensajes programados (mercado, cotizaciones, alertas).
 
-## 🚀 Instalación Rápida
+## Clonar e instalar
 
-### 1️⃣ Clonar el repositorio
 ```bash
 git clone <tu-repo>
 cd impulso_evo
 ```
 
-### 2️⃣ Configurar credenciales
+### Archivos que tenés que tener (no vienen en git)
 
-El proyecto requiere dos archivos de configuración con credenciales (NO se suben a git por seguridad):
+| Archivo | Cómo obtenerlo |
+|---------|----------------|
+| `.env` | `cp .env.example .env` y completar con tus valores |
+| `mensajes/credenciales.json` | `cp mensajes/credenciales.example.json mensajes/credenciales.json` y pegar el JSON de tu service account de Google Cloud |
 
-#### **Archivo `.env`** (raíz del proyecto)
+Guardá tus keys en un gestor de contraseñas o backup seguro. No subas `.env` ni `credenciales.json` a git.
+
+### Levantar el proyecto
+
 ```bash
-# Copia desde el template
-cp .env.example .env
-
-# Edita y completa con tus valores
-# EVOLUTION_API_KEY, GEMINI_API_KEY, SHEET_ID, etc.
-nano .env
-```
-
-**Dónde obtener cada valor:**
-- **EVOLUTION_API_KEY**: Evolution API dashboard
-- **GEMINI_API_KEY**: Google Cloud Console > API Keys
-- **SHEET_ID**: URL de tu Google Sheet (ve la parte del ID)
-- **Grupos**: Ejecuta `python grupos.py` (ver más abajo)
-
-#### **Archivo `mensajes/credenciales.json`** (credencial de Google)
-```bash
-# Copia desde el template
-cp mensajes/credenciales.example.json mensajes/credenciales.json
-
-# Edita con tu JSON de service account de Google Cloud
-nano mensajes/credenciales.json
-```
-
-**Dónde obtener:**
-1. Google Cloud Console > Service Accounts
-2. Crea una nueva service account o usa una existente
-3. Descarga el JSON completo
-4. Reemplaza el contenido en `mensajes/credenciales.json`
-
-### 3️⃣ Ejecutar el proyecto
-```bash
-# Construir e iniciar contenedores
 docker compose up -d --build
+```
 
-# Iniciar sin reconstruir
+Para iniciar sin reconstruir:
+
+```bash
 docker compose up -d
+```
 
-# Ver logs en tiempo real
-docker logs -f impulso_bot_programador
+Para detener:
 
-# Detener contenedores
+```bash
 docker compose down
 ```
 
-## 📋 Comandos útiles
+## Ver logs
 
-### Ver IDs de grupos de WhatsApp
 ```bash
-docker compose exec bot_programador python grupos.py
+docker logs -f impulso_bot
 ```
 
-### Ver logs completos
+## Webhook (Evolution → Inbound)
+
+Levanta el inbound con el compose y configurá en la UI de Evolution el webhook para `MESSAGES_UPSERT` con esta URL:
+
+- `http://bot_inbound:8000/messages-upsert`
+
+Si tu UI te pide una URL base “global” (sin path), también sirve:
+
+- `http://bot_inbound:8000`
+
+porque el servicio expone `/messages-upsert` y `/webhook/messages-upsert`.
+
+## Ver grupos de WhatsApp
+
+Con el proyecto levantado:
+
 ```bash
-docker logs -f impulso_bot_programador
+docker compose exec bot python grupos.py
 ```
 
-## 🔐 Gestión de Secretos - Mejores Prácticas
-
-### ❌ NO HAGAS:
-- ❌ Nunca subes `.env` o `mensajes/credenciales.json` a git
-- ❌ No compartas tus credenciales por email o Slack
-- ❌ No dejes las keys visibles en capturas de pantalla
-
-### ✅ SÍ HAZE:
-- ✅ Mantén `.env` y credenciales solo en local
-- ✅ Si comprometes una key, regenerala inmediatamente
-- ✅ Usa archivos `.example` como templates
-- ✅ Documenta en el `.example` qué va en cada campo
-
-### 🔄 Si se te rompe la PC o cambias de máquina:
-
-1. **Clona el proyecto:**
-   ```bash
-   git clone <tu-repo>
-   cd impulso_evo
-   ```
-
-2. **Copia los archivos de configuración:**
-   ```bash
-   cp .env.example .env
-   cp mensajes/credenciales.example.json mensajes/credenciales.json
-   ```
-
-3. **Completa con tus valores:**
-   - Tienes los `.example` como referencia
-   - Las keys están guardadas en:
-     - 🔐 Gestor de contraseñas (1Password, Bitwarden, LastPass, etc.)
-     - 💾 Backup seguro en la nube (Google Drive, OneDrive encriptado)
-     - 📄 Archivo cifrado separado (no en este repo)
-
-4. **Inicia el proyecto:**
-   ```bash
-   docker compose up -d --build
-   ```
-
-## 📦 Estructura de archivos importantes
-
-```
-impulso_evo/
-├── .env                          ← NO SUBIR A GIT (tus credenciales)
-├── .env.example                  ← ✅ Sube a git (template)
-├── mensajes/
-│   ├── credenciales.json         ← NO SUBIR A GIT (Google service account)
-│   └── credenciales.example.json ← ✅ Sube a git (template)
-├── docker-compose.yml
-└── automatizarMensajes.py
-```
-
-El `.gitignore` ya está configurado para ignorar estos archivos automáticamente.
-
-
+Copiá los IDs `@g.us` en tu `.env` (`GRUPO_DEFAULT`, `GRUPO_PREMIUM`, etc.).
