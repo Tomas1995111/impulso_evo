@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
 from fastapi import FastAPI, Request
@@ -155,7 +155,7 @@ async def messages_upsert(request: Request) -> dict:
         origen = store.get_origen(phone) or ""
         
         # Forzamos la hora actual menos 3 horas directamente
-        fecha_captura = datetime.now().strftime("%d/%m/%Y %H:%M")
+        fecha_captura = datetime.now(timezone(timedelta(hours=-3))).strftime("%d/%m/%Y %H:%M")
 
         # Agregar al grupo Trial
         trial_group = config.TRIAL_GROUP_JID
