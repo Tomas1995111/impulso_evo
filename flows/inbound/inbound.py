@@ -134,6 +134,12 @@ async def messages_upsert(request: Request) -> dict:
 
     # 1) Trigger
     if state == "idle":
+        # Comandos (ej: /alerta MSFT COME.BA)
+        if text.startswith("/"):
+            from flows.inbound.commands import handle_command
+            handle_command(remote_jid, text)
+            return {"ok": True, "state": "idle"}
+
         origen = _origin_from_text(text_norm)
         if "impulso merval" in text_norm and "prueba" in text_norm:
             store.start(phone=phone, origen=origen)
