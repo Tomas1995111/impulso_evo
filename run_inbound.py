@@ -5,7 +5,7 @@ import uvicorn
 
 def main() -> None:
     uvicorn.run(
-        "flows.inbound.server:app",
+        "flows.inbound.inbound:app",
         host="0.0.0.0",
         port=8000,
         log_level="info",

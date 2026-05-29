@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   evolution_api:
     image: evoapicloud/evolution-api:latest
@@ -99,6 +97,20 @@ services:
     volumes:
       - ./mensajes/credenciales.json:/app/mensajes/credenciales.json:ro
       - ./flows/crm:/app/flows/crm
+
+  bot_crm:
+    build: .
+    container_name: impulso_bot_crm
+    restart: always
+    command: ["python", "-u", "run_crm.py"]
+    env_file: .env
+    environment:
+      PYTHONUNBUFFERED: 1
+    depends_on:
+      evolution_api:
+        condition: service_healthy
+    volumes:
+      - ./mensajes/credenciales.json:/app/mensajes/credenciales.json:ro
 
 volumes:
   postgres_data:

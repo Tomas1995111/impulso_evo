@@ -16,10 +16,6 @@ from mensajes.mensajeCotizacionDolar import generar_cotizacion_dolar
 from mensajes.mensajeIndices import generar_mensaje_indices
 from mensajes.mensajeResumen import generar_mensaje_resumen
 
-# ── CONFIGURACIÓN MODO TEST ─────────────────────────────────────────────────
-# Ponelo en True para enviar todo al iniciar. En False solo espera sus horarios.
-EJECUTAR_TEST_AL_INICIO = False
-
 # ── Lógica de Mensajes Dinámicos (Rotativos persistentes) ───────────────────
 def obtener_siguiente_mensaje_dinamico(tipo_mensaje):
     """
@@ -162,8 +158,8 @@ def enviar_mensaje(grupo, clave_o_texto, test_mode: bool = False, test_url: str 
     evolution_client.send_text_to_destinations(grupo, texto)
 
 
-def _run_startup_test():
-    if not EJECUTAR_TEST_AL_INICIO:
+def _run_startup_test(test_mode: bool = False):
+    if not test_mode:
         return
 
     print("⏳ MODO TEST: Verificando que WhatsApp esté 100% online...")
@@ -177,11 +173,11 @@ def _run_startup_test():
             enviar_mensaje(
                 config.GRUPO_DEFAULT,
                 msg["mensaje"],
-                test_mode=EJECUTAR_TEST_AL_INICIO,
+                test_mode=test_mode,
                 test_url=config.DEFAULT_TEST_PREMARKET_URL,
             )
         else:
-            enviar_mensaje(config.GRUPO_DEFAULT, msg["mensaje"], test_mode=EJECUTAR_TEST_AL_INICIO)
+            enviar_mensaje(config.GRUPO_DEFAULT, msg["mensaje"], test_mode=test_mode)
         time.sleep(2)
 
     print("📌 Probando mensajes por fecha específica...")
@@ -190,22 +186,22 @@ def _run_startup_test():
             enviar_mensaje(
                 config.GRUPO_DEFAULT,
                 msg["mensaje"],
-                test_mode=EJECUTAR_TEST_AL_INICIO,
+                test_mode=test_mode,
                 test_url=config.DEFAULT_TEST_PREMARKET_URL,
             )
         else:
-            enviar_mensaje(config.GRUPO_DEFAULT, msg["mensaje"], test_mode=EJECUTAR_TEST_AL_INICIO)
+            enviar_mensaje(config.GRUPO_DEFAULT, msg["mensaje"], test_mode=test_mode)
         time.sleep(2)
 
     print("📢 Probando vencimiento de opciones...")
-    enviar_mensaje(config.GRUPO_DEFAULT, "vencimiento_opciones", test_mode=EJECUTAR_TEST_AL_INICIO)
+    enviar_mensaje(config.GRUPO_DEFAULT, "vencimiento_opciones", test_mode=test_mode)
     time.sleep(2)
 
     print("✅ Fin del test inicial.")
 
 
-def main():
-    _run_startup_test()
+def main(test_mode: bool = False):
+    _run_startup_test(test_mode)
 
     scheduler = BlockingScheduler(timezone="America/Argentina/Buenos_Aires")
 
@@ -225,13 +221,12 @@ def main():
     for msg in mensajes_fecha:
         grupo = msg.get("grupo", config.GRUPO_DEFAULT)
         fecha_dt = datetime.strptime(msg["fecha"], "%d/%m/%Y %H:%M")
-        if fecha_dt > datetime.now():
-            scheduler.add_job(
-                enviar_mensaje,
-                "date",
-                run_date=fecha_dt,
-                args=[grupo, msg["mensaje"]],
-            )
+        scheduler.add_job(
+            enviar_mensaje,
+            "date",
+            run_date=fecha_dt,
+            args=[grupo, msg["mensaje"]],
+        )
 
     scheduler.add_job(
         enviar_mensaje,

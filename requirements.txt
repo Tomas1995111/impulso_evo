@@ -1,0 +1,10 @@
+apscheduler>=3.10
+requests>=2.31
+yfinance>=0.2
+gspread>=6.0
+oauth2client>=4.1
+google-genai>=0.1
+python-dotenv>=1.0
+fastapi>=0.109
+uvicorn>=0.27
+redis>=5.0

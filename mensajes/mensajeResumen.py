@@ -1,32 +1,11 @@
 # mensajeResumen.py
-import requests
+import logging
 import re
-from google import genai
 import time
-import os
 
-# Inicializar el cliente oficial de GenAI
-print("⚙️ [Inicialización] Configurando cliente de Gemini...", flush=True)
-gemini_api_key = os.getenv("GEMINI_API_KEY")
-if not gemini_api_key:
-    raise ValueError("❌ GEMINI_API_KEY no está configurada en las variables de entorno")
-client = genai.Client(api_key=gemini_api_key)
+import requests
 
-# =========================
-# Configuración de LOG
-# =========================
-log_dir = os.getenv("LOG_DIR", "./logs")
-os.makedirs(log_dir, exist_ok=True)
-log_path = os.path.join(log_dir, "log_bot.log")
-
-def _log_line(msg: str):
-    linea = f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}\n"
-    try:
-        with open(log_path, "a", encoding="utf-8") as f:
-            f.write(linea)
-    except Exception:
-        pass
-    print(f"📝 {msg}", flush=True)
+logger = logging.getLogger(__name__)
 
 # =========================
 # Funciones auxiliares
@@ -107,15 +86,28 @@ def extraer_html_crudo(url):
         print(f"❌ [Requests] Error de servidor al bajar la nota. Estado: {res.status_code}", flush=True)
         return None
     except Exception as e:
-        _log_line(f"❌ [Requests] Error de red al descargar el artículo: {e}")
+        logger.error(f"Error de red al descargar el artículo: {e}")
         return None
+
+def _get_gemini_client():
+    from google import genai
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        print("❌ GEMINI_API_KEY no está configurada.", flush=True)
+        return None
+    return genai.Client(api_key=api_key)
+
 
 def procesar_con_gemini(html_crudo):
     """Le pasa el HTML crudo a Gemini para que limpie el código basura y devuelva el resumen formateado."""
     if not html_crudo:
         print("⚠️ [Gemini] Cancelado: El HTML de entrada está vacío.", flush=True)
         return None
-        
+
+    client = _get_gemini_client()
+    if not client:
+        return None
+
     print(f"🧠 [Gemini] Enviando HTML crudo a Gemini 2.5 Flash...", flush=True)
     prompt = (
         "Te voy a pasar el código HTML completo y crudo de un artículo de CNBC. "
@@ -139,7 +131,7 @@ def procesar_con_gemini(html_crudo):
         print("✨ [Gemini] Procesamiento de IA completado exitosamente.", flush=True)
         return response.text.strip()
     except Exception as e:
-        _log_line(f"❌ [Gemini] Error crítico invocando la API: {e}")
+        logger.error(f"Error crítico invocando la API: {e}")
         return None
 
 # =========================
@@ -161,7 +153,7 @@ def generar_mensaje_resumen(test_url: str = None):
             # Busca el link directo en el mapa de sitio
             url = esperar_y_buscar_url()
             if not url:
-                _log_line("🛑 [Fin] No se envió nada porque no se encontró la nota en el sitemap de CNBC.")
+                logger.warning("No se envió nada porque no se encontró la nota en el sitemap de CNBC.")
                 return None
 
         # 1. Bajamos el código de la página directo
@@ -179,5 +171,5 @@ def generar_mensaje_resumen(test_url: str = None):
 
     except Exception as e:
         msg = f"[!] Error inesperado generando mensajeResumen: {e}"
-        _log_line(f"💥 {msg}")
+        logger.error(msg)
         return msg

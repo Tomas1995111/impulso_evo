@@ -1,32 +1,17 @@
-# Futuro: lógica del flujo CRM (CRON, reglas de negocio, Sheets, grupos).
-import os
-import time
 import logging
+import time
 from datetime import datetime
-import gspread
-import requests
-from dotenv import load_dotenv
 
-# Configuración de logs para Docker/Consola
+import gspread
+
+from core import config
+from core import evolution_client
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - [%(levelname)s] - %(message)s'
 )
-logger = logging.getLogger("CRM_Worker")        
-
-# Cargar variables de entorno
-load_dotenv()
-
-# Variables de entorno
-EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "http://evolution-api:8080").rstrip("/")
-EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "")
-EVOLUTION_INSTANCE = os.getenv("EVOLUTION_INSTANCE", "Impulso") # Nombre de tu instancia en Evolution
-GRUPO_FREE = os.getenv("GRUPO_FREE", "5493814403346-1589836446@g.us")
-LEADS_SHEET_ID = os.getenv("LEADS_SHEET_ID", "") # El ID de tu Google Sheet (está en la URL)
-LEADS_SHEET_TAB = os.getenv("LEADS_SHEET_TAB", "Maestro") # Nombre de la pestaña
-
-# Credenciales de Google Sheets
-CREDENTIALS_FILE = "mensajes/credenciales.json"
+logger = logging.getLogger("CRM_Worker")
 
 # Índices de columnas (1-based para gspread)
 COL_TELEFONO = 1
@@ -36,95 +21,29 @@ COL_ESTADO = 6
 COL_FECHA_BAJA = 7
 COL_ULTIMA_ACT = 9
 
-# --- FUNCIONES DE API (EVOLUTION) ---
-
-def send_whatsapp_message(phone: str, text: str) -> bool:
-    """Envía un mensaje de texto por WhatsApp usando Evolution API."""
-    # Aseguramos que el número termine en @s.whatsapp.net
-    remote_jid = phone if "@" in phone else f"{phone}@s.whatsapp.net"
-    
-    url = f"{EVOLUTION_API_URL}/message/sendText/{EVOLUTION_INSTANCE}"
-    headers = {
-        "apikey": EVOLUTION_API_KEY,
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "number": remote_jid,
-        "text": text
-    }
-    
-    try:
-        response = requests.post(url, json=payload, headers=headers, timeout=10)
-        response.raise_for_status()
-        return True
-    except Exception as e:
-        logger.error(f"Error enviando mensaje a {phone}: {e}")
-        return False
-
-def remove_from_group(phone: str, group_id: str) -> bool:
-    """Remueve a un participante de un grupo de WhatsApp."""
-    url = f"{EVOLUTION_API_URL}/group/updateParticipant/{EVOLUTION_INSTANCE}"
-    headers = {
-        "apikey": EVOLUTION_API_KEY,
-        "Content-Type": "application/json"
-    }
-    
-    # Evolution exige que el array de participantes tenga el sufijo completo de WhatsApp
-    participant_jid = phone if "@" in phone else f"{phone}@s.whatsapp.net"
-    
-    payload = {
-        "groupJid": group_id,
-        "action": "remove",
-        "participants": [participant_jid]
-    }
-    
-    try:
-        response = requests.post(url, json=payload, headers=headers, timeout=10)
-        
-        # Fallback de compatibilidad por si usa la instancia en el header
-        if response.status_code == 404:
-            url_alt = f"{EVOLUTION_API_URL}/group/updateParticipant"
-            headers["instance"] = EVOLUTION_INSTANCE
-            response = requests.post(url_alt, json=payload, headers=headers, timeout=10)
-            
-        response.raise_for_status()
-        return True
-    except Exception as e:
-        logger.error(f"Error removiendo a {phone} del grupo {group_id}: {e}")
-        return False
-    
-# --- LÓGICA DE FECHAS Y MENSAJES ---
 
 def get_days_diff(date_str: str) -> int:
-    """Calcula la diferencia de días entre hoy y la fecha provista, soportando múltiples formatos."""
+    """Calcula la diferencia de días entre hoy y la fecha provista."""
     if not date_str:
         return -1
-    
-    # Lista de formatos posibles de Google Sheets (ordenados de más específicos a más simples)
     formats = [
-        "%d/%m/%Y %H:%M:%S",  # 27/05/2026 00:35:10
-        "%d/%m/%Y %H:%M",     # 27/05/2026 00:35
-        "%d/%m/%Y %k:%M",     # 27/05/2026  0:35 (soporta espacios u horas de 1 dígito)
-        "%d/%m/%Y %G:%M",     # Alternativo para horas sueltas
-        "%d/%m/%Y"            # Solo fecha: 27/05/2026
+        "%d/%m/%Y %H:%M:%S",
+        "%d/%m/%Y %H:%M",
+        "%d/%m/%Y %k:%M",
+        "%d/%m/%Y %G:%M",
+        "%d/%m/%Y",
     ]
-    
-    # Limpieza básica por si quedan espacios raros
     clean_date = date_str.strip()
-    
-    # Intentar parsear recursivamente con los formatos válidos
     for fmt in formats:
         try:
             dt = datetime.strptime(clean_date, fmt)
-            now = datetime.now()
-            diff = now - dt
+            diff = datetime.now() - dt
             return diff.days
         except ValueError:
             continue
-            
-    # Si llega acá es porque de verdad el formato es completamente extraño
-    logger.error(f"Formato de fecha inválido y no reconocido por ningún patrón: '{date_str}'")
+    logger.error(f"Formato de fecha inválido: '{date_str}'")
     return -1
+
 
 def get_message(msg_id: int, nombre: str) -> str:
     messages = {
@@ -138,16 +57,18 @@ def get_message(msg_id: int, nombre: str) -> str:
     }
     return messages.get(msg_id, "")
 
-# --- NÚCLEO DEL CRM ---
+
+def _get_worksheet():
+    gc = gspread.service_account(filename=config.CREDENTIALS_FILE)
+    sh = gc.open_by_key(config.LEADS_SHEET_ID)
+    return sh.worksheet(config.LEADS_SHEET_TAB)
+
 
 def process_crm():
     logger.info("Iniciando CRM Worker...")
-    
-    # 1. Conectar a Google Sheets
+
     try:
-        gc = gspread.service_account(filename=CREDENTIALS_FILE)
-        sh = gc.open_by_key(LEADS_SHEET_ID)
-        worksheet = sh.worksheet(LEADS_SHEET_TAB)
+        worksheet = _get_worksheet()
         records = worksheet.get_all_values()
     except Exception as e:
         logger.error(f"Error conectando a Google Sheets: {e}")
@@ -158,12 +79,11 @@ def process_crm():
         return
 
     hoy_str = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-    
-    # Ignorar la fila 1 (Cabeceras)
-    for idx, row in enumerate(records[1:], start=2): # start=2 porque la fila 1 en Sheets es la cabecera
-        # Asegurar que la fila tiene suficientes columnas
+    batch_updates = []
+
+    for idx, row in enumerate(records[1:], start=2):
         row = row + [""] * (10 - len(row))
-        
+
         telefono = row[COL_TELEFONO - 1].strip()
         nombre = row[COL_NOMBRE - 1].strip()
         fecha_captura = row[COL_FECHA_CAPTURA - 1].strip()
@@ -172,14 +92,13 @@ def process_crm():
         logger.info(f"Procesando {nombre}: Estado='{estado}', DiasBaja={get_days_diff(fecha_baja)}")
         if not telefono or not estado:
             continue
-            
-        # Estados a ignorar completamente
+
         if estado in ["Premium", "Retargeting Final", "Baja Final", "Eliminado Definitivo"]:
             continue
-            
+
         dias_captura = get_days_diff(fecha_captura)
         dias_baja = get_days_diff(fecha_baja)
-        
+
         nuevo_estado = None
         mensaje_id = None
         remover_grupo = False
@@ -198,7 +117,7 @@ def process_crm():
             remover_grupo = True
             mensaje_id = 4
             nuevo_estado = "Eliminado"
-            
+
         # --- BLOQUE RETARGETING ---
         elif estado == "Eliminado" and dias_captura >= 22:
             mensaje_id = 5
@@ -206,44 +125,52 @@ def process_crm():
         elif estado == "Retargeting 15" and dias_captura >= 47:
             mensaje_id = 6
             nuevo_estado = "Retargeting Final"
-            
+
         # --- BLOQUE BAJA PREMIUM ---
         elif estado == "Baja" and dias_baja >= 60:
             mensaje_id = 7
             nuevo_estado = "Baja Final"
-            
+
         # --- EJECUCIÓN DE ACCIONES ---
         if nuevo_estado:
             logger.info(f"Procesando a {nombre} ({telefono}) - Transición: {estado} -> {nuevo_estado}")
-            
+
             exito = True
-            
-            # 1. Remover del grupo si aplica
+
             if remover_grupo:
                 logger.info(f"Removiendo a {telefono} del grupo free...")
-                exito = remove_from_group(telefono, GRUPO_FREE)
-                time.sleep(2) # Pausa de seguridad
-                
-            # 2. Enviar mensaje
+                exito = evolution_client.remove_participant_from_group(config.FREE, telefono)
+                time.sleep(2)
+
             if mensaje_id and exito:
                 texto = get_message(mensaje_id, nombre)
-                exito = send_whatsapp_message(telefono, texto)
-                
-            # 3. Actualizar Sheet si todo salió bien
+                remote_jid = telefono if "@" in telefono else f"{telefono}@s.whatsapp.net"
+                evolution_client.send_text(remote_jid, texto)
+                exito = True
+
             if exito:
-                try:
-                    worksheet.update_cell(idx, COL_ESTADO, nuevo_estado)
-                    worksheet.update_cell(idx, COL_ULTIMA_ACT, hoy_str)
-                    logger.info(f"✅ Sheet actualizado exitosamente para {nombre}")
-                except Exception as e:
-                    logger.error(f"❌ Error actualizando celda en Google Sheets para fila {idx}: {e}")
+                batch_updates.append((idx, COL_ESTADO, nuevo_estado))
+                batch_updates.append((idx, COL_ULTIMA_ACT, hoy_str))
+                logger.info(f"✅ Sheet registrado para batch update: {nombre}")
             else:
                 logger.warning(f"⚠️ Se omitió actualización de Sheet para {nombre} por error en API.")
-                
-            # Sleep fundamental para evitar baneos de WhatsApp entre clientes (ej. 3 a 5 segundos)
-            time.sleep(4) 
+
+            time.sleep(4)
+
+    if batch_updates:
+        try:
+            cells_to_update = []
+            for row_idx, col_idx, val in batch_updates:
+                cell = worksheet.cell(row_idx, col_idx)
+                cell.value = val
+                cells_to_update.append(cell)
+            worksheet.update_cells(cells_to_update)
+            logger.info(f"✅ Batch update completado: {len(cells_to_update)} celdas actualizadas.")
+        except Exception as e:
+            logger.error(f"❌ Error en batch update de Google Sheets: {e}")
 
     logger.info("CRM Worker finalizó su ejecución.")
+
 
 if __name__ == "__main__":
     process_crm()

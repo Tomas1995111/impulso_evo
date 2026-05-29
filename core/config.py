@@ -1,6 +1,10 @@
 """Variables de entorno y constantes compartidas por todos los flujos."""
 import os
 
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 # Evolution API
 EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "http://evolution_api:8080")
 EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY")
@@ -18,6 +22,12 @@ DEFAULT_TEST_PREMARKET_URL = os.getenv(
     "TEST_PREMARKET_URL",
     "https://www.cnbc.com/2026/05/15/stocks-making-the-biggest-moves-premarket-amat-intc-micc.html",
 )
+
+# Ruta absoluta a credenciales de Google
+CREDENTIALS_FILE = str(BASE_DIR / "mensajes" / "credenciales.json")
+
+# Timezone por defecto
+TIMEZONE = "America/Argentina/Buenos_Aires"
 
 # Google Sheet de alertas (mensajes mensajeAlertaCompra*)
 SHEET_ID = os.getenv("SHEET_ID", "1Z9gfXGPdhBktLMwAIj4KpJ5SI2hDKK5lXG2Z63DaMSI")

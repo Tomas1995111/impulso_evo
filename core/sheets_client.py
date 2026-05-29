@@ -8,19 +8,24 @@ from datetime import datetime
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
+from core import config
+
+SCOPES = [
+    "https://spreadsheets.google.com/feeds",
+    "https://www.googleapis.com/auth/drive",
+]
+
 
 def _client_from_service_account_json(
-    credentials_path: str = "mensajes/credenciales.json",
+    credentials_path: str | None = None,
 ) -> gspread.Client:
-    scopes = [
-        "https://spreadsheets.google.com/feeds",
-        "https://www.googleapis.com/auth/drive",
-    ]
+    if not credentials_path:
+        credentials_path = config.CREDENTIALS_FILE
     if not os.path.exists(credentials_path):
         raise FileNotFoundError(
             f"No se encontró '{credentials_path}'. Copialo desde mensajes/credenciales.example.json"
         )
-    creds = ServiceAccountCredentials.from_json_keyfile_name(credentials_path, scopes)
+    creds = ServiceAccountCredentials.from_json_keyfile_name(credentials_path, SCOPES)
     return gspread.authorize(creds)
 
 
@@ -76,3 +81,17 @@ def append_lead_row(
         ahora,  # Última Actualización
     ]
     ws.append_row(row, value_input_option="USER_ENTERED")
+
+
+def append_alert_row(
+    fecha: str,
+    ticker: str,
+    precio: float,
+    stop_loss: float,
+    sheet_id: str = "",
+) -> None:
+    """Append de una alerta bursátil a la sheet de alertas."""
+    sid = sheet_id or config.SHEET_ID
+    client = _client_from_service_account_json()
+    sheet = client.open_by_key(sid).sheet1
+    sheet.append_row([fecha, ticker, precio, stop_loss])

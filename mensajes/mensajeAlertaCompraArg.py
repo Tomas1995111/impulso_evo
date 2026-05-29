@@ -4,8 +4,9 @@ import math
 import datetime
 import time
 import os
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+import traceback
+
+from core import sheets_client
 
 # Lista de acciones argentinas
 tickers_arg = [
@@ -26,20 +27,9 @@ SHEET_ID = os.getenv("SHEET_ID", "1Z9gfXGPdhBktLMwAIj4KpJ5SI2hDKK5lXG2Z63DaMSI")
 # Función para guardar en Google Sheets
 def guardar_en_gsheet(fecha, ticker, precio, stop_loss, sheet_id):
     try:
-        scope = [
-            "https://spreadsheets.google.com/feeds",
-            "https://www.googleapis.com/auth/drive"
-        ]
-        creds = ServiceAccountCredentials.from_json_keyfile_name("mensajes/credenciales.json", scope)
-        client = gspread.authorize(creds)
-        sheet = client.open_by_key(sheet_id).sheet1
-
-        fila_vacia = len(sheet.get_all_values()) + 1
-        sheet.update(f"A{fila_vacia}", [[fecha, ticker, precio, stop_loss]])
-
-        print(f"✅ Datos guardados en Google Sheet (fila {fila_vacia})")
+        sheets_client.append_alert_row(fecha, ticker, precio, stop_loss, sheet_id)
+        print(f"✅ Datos guardados en Google Sheet")
     except Exception as e:
-        import traceback
         print("❌ Error al guardar en Google Sheet:")
         traceback.print_exc()
 

@@ -15,8 +15,8 @@ class ConversationStateStore:
       - awaiting_email
     """
 
-    def __init__(self) -> None:
-        self._r = redis.Redis(host="redis", port=6379, decode_responses=True)
+    def __init__(self, redis_client: Optional[redis.Redis] = None) -> None:
+        self._r = redis_client or redis.Redis(host="redis", port=6379, decode_responses=True)
 
     def _key(self, phone: str) -> str:
         return f"inbound:{phone}"
