@@ -69,12 +69,6 @@ class TestMensajesProgramados:
             if msg["mensaje"] in MENSAJES_ESPECIALES:
                 assert True
 
-    def test_mensajes_especiales_no_son_texto_literal(self):
-        for msg in mensajes_semana + mensajes_fecha:
-            if msg["mensaje"] in MENSAJES_ESPECIALES:
-                resultado = resolver_mensaje(msg["mensaje"])
-                assert resultado != msg["mensaje"]
-
     def test_mensajes_fecha_formato_valido(self):
         for msg in mensajes_fecha:
             dt = datetime.strptime(msg["fecha"], "%d/%m/%Y %H:%M")

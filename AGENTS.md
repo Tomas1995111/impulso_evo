@@ -33,7 +33,7 @@ docker compose run --rm bot python -c "..."        # ejecutar código ad-hoc
 
 ## Arquitectura clave
 
-- **Broadcast**: `BlockingScheduler` con jobs cron/date. Los mensajes especiales (`noticia_mercado`, `resumen_indices`, etc.) se resuelven via `MENSAJES_ESPECIALES` dict en `broadcast.py:88`. Contenido rotativo (miercoles/viernes/motivacionales) se persiste en `estado_mensajes.json` con mezcla aleatoria.
+- **Broadcast**: `BlockingScheduler` con jobs cron/date. Los mensajes especiales (`noticia_mercado`, `resumen_indices`, etc.) se resuelven via `MENSAJES_ESPECIALES` dict en `broadcast.py:86`. Contenido rotativo (miercoles/viernes/motivacionales) se persiste en `estado_mensajes.json` con mezcla aleatoria.
 - **Inbound**: FastAPI escucha en `:8000/messages-upsert`. Conversación guiada por estados en Redis (`idle → awaiting_name → awaiting_email`). TTL 6h. Tolerante a fallos de Sheets o grupo.
 - **CRM**: `process_crm()` lee Google Sheets, aplica reglas de negocio (Trial0→Trial3→...→Eliminado→Retargeting), actualiza estados. Corre 1 vez al día vía APScheduler.
 - **Evolution API**: El servicio `evolution_api` en docker-compose es `evoapicloud/evolution-api:latest`. Los bots se conectan por `http://evolution_api:8080`. La instancia se llama `Impulso` por defecto (`EVOLUTION_INSTANCE_NAME`).
@@ -47,7 +47,7 @@ docker compose run --rm bot python -c "..."        # ejecutar código ad-hoc
 - Las credenciales de Google viven en `mensajes/credenciales.json` (gitignorado). Ruta absoluta resuelta en `core.config.CREDENTIALS_FILE`.
 - `estado_mensajes.json` es runtime state — se monta como volumen en Docker.
 - `ZoneInfo("America/Argentina/Buenos_Aires")` usado en inbound; timezone hardcoded como string en broadcast y run_crm.
-- Las alertas bursátiles (`mensajeAlertaCompra*`) ahora son wrappers delgados que delegan en `core/alerts.py`. El comando `/alerta TICKER1 TICKER2...` se maneja en `flows/inbound/commands.py` y también usa `core/alerts.py`. No hay más lógica duplicada.
+- Las alertas bursátiles viven en `core/alerts.py` (ticker lists, fetch, build, save). El comando `/alerta TICKER1 TICKER2...` se maneja en `flows/inbound/commands.py` y también usa `core/alerts.py`. No hay más lógica duplicada.
 - Las funciones `send_text` y `send_text_to_destinations` en evolution_client usan `print()` para logging (no `logging`).
 - No hay `.env` loading automático en `run_broadcast.py` ni `run_inbound.py` — las variables se inyectan via `env_file: .env` en docker-compose. El CRM worker sí usaba `load_dotenv()` pero fue eliminado en refactor.
 

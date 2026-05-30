@@ -10,8 +10,8 @@ from apscheduler.schedulers.blocking import BlockingScheduler
 
 from core import config
 from core import evolution_client
-from mensajes.mensajeAlertaCompra import generar_alerta_aleatoria
-from mensajes.mensajeAlertaCompraArg import generar_alerta_aleatoria_arg
+from core.links import SUSCRIPCION_PREMIUM_30D
+from core.alerts import search_arg_alert, search_us_alert
 from mensajes.mensajeCotizacionDolar import generar_cotizacion_dolar
 from mensajes.mensajeIndices import generar_mensaje_indices
 from mensajes.mensajeResumen import generar_mensaje_resumen
@@ -85,9 +85,8 @@ MENSAJES_ESPECIALES = {
     "cotizacion_dolar": generar_cotizacion_dolar,
     "resumen_indices": generar_mensaje_indices,
     "noticia_mercado": generar_mensaje_resumen,
-    "alerta_bursatil": generar_alerta_aleatoria,
-    "alerta_bursatil_arg": generar_alerta_aleatoria_arg,
-    # "reporte_google_sheet":generar_reporte_google_sheet,
+    "alerta_bursatil": search_us_alert,
+    "alerta_bursatil_arg": search_arg_alert,
     "dinamico_miercoles": lambda: obtener_siguiente_mensaje_dinamico("miercoles"),
     "dinamico_viernes": lambda: obtener_siguiente_mensaje_dinamico("viernes"),
     "dinamico_motivacional": lambda: obtener_siguiente_mensaje_dinamico("motivacionales"),
@@ -125,7 +124,7 @@ mensajes_semana = [
     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:02", "mensaje": "alerta_bursatil_arg", "grupo": [config.REVISION]},
     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "15:30", "mensaje": "cotizacion_dolar", "grupo": [config.PREMIUM]},
     {"dias": ["fri"], "hora": "13:30", "mensaje": "💰 *¡No te olvides de caucionar lo líquido este finde semana!*", "grupo": [config.PREMIUM]},
-    {"dias": ["tue"], "hora": "16:00", "mensaje": "🎁 *¡Invitá a un amigo y ganan los dos!*\n\nSi alguien se suscribe con este link 👇\nhttps://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=2c9380847596cf970175ae9482893205\n*y nos dice que vos lo invitaste*, te bonificamos *tu próximo pago* 💸\n\n👥 *¿Cómo funciona?*\n1️⃣ Compartí el link con quien creas que le puede servir\n2️⃣ Cuando se sume, que nos escriba: *\"Me invitó Juan\"*\n3️⃣ ¡Ambos reciben *30 días gratis*!\n\n📩 *Ante cualquier duda, escribime por privado.*", "grupo": [config.PREMIUM]},
+    {"dias": ["tue"], "hora": "16:00", "mensaje": f"🎁 *¡Invitá a un amigo y ganan los dos!*\n\nSi alguien se suscribe con este link 👇\n{SUSCRIPCION_PREMIUM_30D}\n*y nos dice que vos lo invitaste*, te bonificamos *tu próximo pago* 💸\n\n👥 *¿Cómo funciona?*\n1️⃣ Compartí el link con quien creas que le puede servir\n2️⃣ Cuando se sume, que nos escriba: *\"Me invitó Juan\"*\n3️⃣ ¡Ambos reciben *30 días gratis*!\n\n📩 *Ante cualquier duda, escribime por privado.*", "grupo": [config.PREMIUM]},
     {"dias": ["tue"], "hora": "17:30", "mensaje": "dinamico_motivacional", "grupo": [config.PREMIUM]},
     {"dias": ["wed"], "hora": "17:30", "mensaje": "dinamico_miercoles", "grupo": [config.PREMIUM]},
     {"dias": ["fri"], "hora": "17:30", "mensaje": "dinamico_viernes", "grupo": [config.PREMIUM]},

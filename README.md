@@ -27,7 +27,8 @@ impulso_evo/
 ├── core/                        # Módulos compartidos entre todos los flujos
 │   ├── config.py                # Variables de entorno y constantes
 │   ├── evolution_client.py      # Cliente HTTP para Evolution API (envío, gestión de grupos, retry)
-│   └── sheets_client.py         # Cliente Google Sheets (append de leads y alertas)
+│   ├── sheets_client.py         # Cliente Google Sheets (append de leads y alertas)
+│   └── alerts.py                # Lógica de alertas bursátiles (fetch, build, save, tickers)
 ├── flows/
 │   ├── broadcast/               # Flujo 1 — Mensajes programados a grupos WhatsApp
 │   │   └── broadcast.py         #   APScheduler, mensajes semanales/fecha, contenido rotativo
@@ -37,8 +38,6 @@ impulso_evo/
 │   └── crm/                     # Flujo 3 — Ciclo de vida de leads (Trial → Retargeting)
 │       └── crm_worker.py        #   Transiciones de estado, batch update en Sheets
 ├── mensajes/                    # Generadores de contenido bursátil
-│   ├── mensajeAlertaCompra.py   #   Alertas de compra (yfinance)
-│   ├── mensajeAlertaCompraArg.py#   Alertas de compra Argentina
 │   ├── mensajeCotizacionDolar.py#   Cotización del dólar
 │   ├── mensajeIndices.py        #   Resumen de índices
 │   ├── mensajeResumen.py        #   Resumen de noticias de mercado

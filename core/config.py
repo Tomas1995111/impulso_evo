@@ -29,7 +29,7 @@ CREDENTIALS_FILE = str(BASE_DIR / "mensajes" / "credenciales.json")
 # Timezone por defecto
 TIMEZONE = "America/Argentina/Buenos_Aires"
 
-# Google Sheet de alertas (mensajes mensajeAlertaCompra*)
+# Google Sheet de alertas (core.alerts)
 SHEET_ID = os.getenv("SHEET_ID", "1Z9gfXGPdhBktLMwAIj4KpJ5SI2hDKK5lXG2Z63DaMSI")
 
 # Google Sheet de clientes / inbound (pestaña Maestro)

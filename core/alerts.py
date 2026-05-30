@@ -13,6 +13,32 @@ from core import sheets_client
 
 SHEET_ID = os.getenv("SHEET_ID", config.SHEET_ID)
 
+TICKERS_US = [
+    'NOW', 'SHW', 'COST', 'AZO', 'SNPS', 'META', 'LMT', 'CAT', 'TMO', 'UNH',
+    'DE', 'ADSK', 'IBM', 'JPM', 'AAPL', 'UNP', 'HD', 'BLK', 'PNC', 'FDX',
+    'NSC', 'AMZN', 'BRK-B', 'TMUS', 'CRM', 'MAR', 'RSG', 'EXPE', 'AXP', 'QCOM',
+    'LOW', 'GE', 'CVX', 'RL', 'VST', 'LIN', 'CMI', 'ACN', 'MCD', 'MSFT', 'DIS',
+    'JNJ', 'AMGN', 'HON', 'PG', 'MMM', 'BA', 'NVDA', 'KO', 'V', 'WMT',
+    'VZ', 'GS', 'NKE', 'CSCO', 'MRK', 'NFLX', 'ASML', 'REGN', 'KLAC', 'BKNG',
+    'MELI', 'MDB', 'MSTR', 'ZS', 'AMD', 'AVGO', 'GILD', 'TXN', 'TSLA', 'GOOG',
+    'ROST', 'TTWO', 'WDAY', 'PLTR', 'CEG', 'MU', 'LLY', 'MCK', 'GOOGL', 'TSM',
+    'MA', 'ORCL', 'XOM', 'SAP', 'BAC', 'ABBV', 'SPY', 'QQQ', 'DIA', 'IWM',
+    'VTI', 'VEA', 'VWO', 'TLT', 'GLD', 'XLF', 'XLE', 'XLV', 'XLK', 'XLY',
+    'XLU', 'INTC', 'PEP', 'UPS', 'ADBE', 'MDT', 'PFE', 'BABA', 'SBUX', 'CSX',
+]
+
+TICKERS_ARG = [
+    "GGAL.BA", "YPFD.BA", "BMA.BA", "BBAR.BA", "PAMP.BA",
+    "TGSU2.BA", "TXAR.BA", "SUPV.BA", "COME.BA", "BYMA.BA",
+    "CEPU.BA", "ALUA.BA", "TRAN.BA", "LOMA.BA", "EDN.BA",
+    "VALO.BA", "METR.BA", "IRSA.BA", "TECO2.BA", "TGNO4.BA",
+    "CRES.BA", "MIRG.BA", "BOLT.BA", "AUSO.BA", "SAMI.BA",
+    "MOLI.BA", "RICH.BA", "LEDE.BA", "CVH.BA", "BPAT.BA",
+    "DGCU2.BA", "BHIP.BA", "CELU.BA", "AGRO.BA", "PATA.BA",
+    "CECO2.BA", "A3.BA", "GRIM.BA", "MORI.BA", "HARG.BA",
+    "GBAN.BA", "CGPA2.BA",
+]
+
 
 def fetch_stock_data(ticker: str) -> dict:
     """Obtiene datos de una acción via yfinance."""
@@ -136,3 +162,18 @@ def search_alert_condition(tickers: list[str], sheet_id: str | None = None) -> s
         except Exception as e:
             print(f"⚠️ Error con {ticker}: {e}")
     return None
+
+
+def search_us_alert(*, sheet_id: str | None = None) -> str | None:
+    """Busca aleatoriamente en tickers US. Para broadcast."""
+    return search_alert_condition(TICKERS_US, sheet_id)
+
+
+def search_arg_alert(*, sheet_id: str | None = None) -> str | None:
+    """Busca aleatoriamente en tickers ARG. Para broadcast."""
+    return search_alert_condition(TICKERS_ARG, sheet_id)
+
+
+if __name__ == "__main__":
+    alerta = search_us_alert() or search_arg_alert()
+    print(alerta or "No hay alertas en este momento.")
