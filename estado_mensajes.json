@@ -53,7 +53,7 @@
             14,
             0
         ],
-        "proximo_indice": 12
+        "proximo_indice": 14
     },
     "miercoles": {
         "lista_mezclada": [
@@ -115,7 +115,7 @@
             52,
             5
         ],
-        "proximo_indice": 12
+        "proximo_indice": 14
     },
     "viernes": {
         "lista_mezclada": [
@@ -173,6 +173,6 @@
             50,
             2
         ],
-        "proximo_indice": 13
+        "proximo_indice": 15
     }
 }

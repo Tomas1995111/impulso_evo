@@ -1,8 +1,9 @@
-"""Cliente simple para Google Sheets (append)."""
+"""Cliente simple para Google Sheets (append y búsqueda)."""
 
 from __future__ import annotations
 
 import os
+import re
 from datetime import datetime
 
 import gspread
@@ -95,3 +96,35 @@ def append_alert_row(
     client = _client_from_service_account_json()
     sheet = client.open_by_key(sid).sheet1
     sheet.append_row([fecha, ticker, precio, stop_loss])
+
+
+def search_leads(query: str) -> list[dict]:
+    """Busca en el Sheet de leads por teléfono (exacto) o nombre (parcial, case-insensitive).
+    Retorna lista de dicts con todas las columnas."""
+    client = _client_from_service_account_json()
+    sh = client.open_by_key(config.LEADS_SHEET_ID)
+    ws = sh.worksheet(config.LEADS_SHEET_TAB)
+    records = ws.get_all_values()
+
+    if not records or len(records) <= 1:
+        return []
+
+    headers = records[0]
+    query_lower = query.strip().lower()
+    query_digits = re.sub(r"\D+", "", query_lower)
+    results = []
+
+    for row in records[1:]:
+        row = row + [""] * (len(headers) - len(row))
+        phone = (row[0] or "").strip()
+        name = (row[1] or "").strip()
+        phone_digits = re.sub(r"\D+", "", phone)
+
+        if query_digits and phone_digits == query_digits:
+            results.append(dict(zip(headers, row)))
+            continue
+
+        if query_lower and query_lower in name.lower():
+            results.append(dict(zip(headers, row)))
+
+    return results
