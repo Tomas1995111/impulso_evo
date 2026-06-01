@@ -192,8 +192,11 @@ class TestOrigenDetection:
     @pytest.mark.parametrize("text,expected_state", [
         ("prueba gratis de Impulso Merval", "awaiting_name"),
         ("PRUEBA GRATUITA impulso merval", "awaiting_name"),
-        ("Quiero info de Impulso Merval", "idle"),
+        ("Quiero info de Impulso Merval", "awaiting_name"),
+        ("me interesa el mercado", "awaiting_name"),
+        ("quiero sumarme a impulso", "awaiting_name"),
         ("Hola como estas", "idle"),
+        ("como estas?", "idle"),
     ])
     def test_detecta_origen(self, text, expected_state, client, mock_evolution_post):
         resp = client.post("/messages-upsert", json=_payload(text=text))
@@ -203,5 +206,21 @@ class TestOrigenDetection:
     def test_origin_instagram_detectado(self, client, mock_evolution_post):
         payload = _payload(text="prueba gratis impulso merval")
         resp = client.post("/messages-upsert", json=payload)
+        assert resp.status_code == 200
+        assert resp.json()["state"] == "awaiting_name"
+
+
+class TestPhoneExists:
+    def test_numero_conocido_no_dispara_inbound(self, client, mock_evolution_post):
+        with patch("core.sheets_client.phone_exists", return_value=True):
+            resp = client.post("/messages-upsert", json=_payload(
+                text="quiero info de Impulso Merval",
+            ))
+        assert resp.status_code == 200
+        assert resp.json()["state"] == "idle"
+
+    def test_numero_nuevo_dispara_inbound_normal(self, client, mock_evolution_post):
+        with patch("core.sheets_client.phone_exists", return_value=False):
+            resp = client.post("/messages-upsert", json=_payload())
         assert resp.status_code == 200
         assert resp.json()["state"] == "awaiting_name"

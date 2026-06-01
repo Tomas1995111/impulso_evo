@@ -52,6 +52,14 @@ def mock_sheets_append() -> Generator[MagicMock, None, None]:
         yield mock
 
 
+@pytest.fixture(autouse=True)
+def mock_phone_exists() -> Generator[MagicMock, None, None]:
+    """Por defecto, phone_exists() retorna False (número no registrado).
+    Tests específicos pueden sobreescribir con @patch directo."""
+    with patch("core.sheets_client.phone_exists", return_value=False) as mock:
+        yield mock
+
+
 @pytest.fixture
 def mock_yfinance_ticker() -> Generator[MagicMock, None, None]:
     mock_ticker = MagicMock()

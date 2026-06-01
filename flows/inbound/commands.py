@@ -6,6 +6,7 @@ import traceback
 from core import evolution_client
 from core.alerts import generate_ticker_alert
 from core.links import SUSCRIPCION_PREMIUM, SUSCRIPCION_PREMIUM_7D, SUSCRIPCION_PREMIUM_30D
+from core.precio import generar_cotizacion_precio
 from core.sheets_client import search_leads
 
 LINKS: dict[str, str] = {
@@ -19,7 +20,8 @@ COMANDOS_AYUDA = (
     "• `/alerta TICKER1 TICKER2...` — alerta bursátil para uno o más tickers (US o Argentina)\n"
     "• `/ayuda` — muestra esta ayuda\n"
     "• `/links` — links útiles de Impulso Merval\n"
-    "• `/perfil NOMBRE o TELÉFONO` — busca y muestra perfil de un cliente"
+    "• `/perfil NOMBRE o TELÉFONO` — busca y muestra perfil de un cliente\n"
+    "• `/precio TICKER` — cotización rápida de una acción (precio, variación, máx/mín)"
 )
 
 
@@ -42,6 +44,11 @@ def handle_command(remote_jid: str, text: str) -> bool:
         _cmd_perfil(remote_jid, args)
         return True
 
+    if cmd.startswith("/precio"):
+        args = text[len("/precio"):].strip()
+        _cmd_precio(remote_jid, args)
+        return True
+
     m = re.match(r"^/alerta\s+(.+)$", text, re.IGNORECASE | re.DOTALL)
     if m:
         _cmd_alerta(remote_jid, m.group(1))
@@ -56,6 +63,18 @@ def _cmd_links(remote_jid: str) -> None:
     for name, url in LINKS.items():
         lines.append(f"• *{name}*: {url}")
     evolution_client.send_text(remote_jid, "\n".join(lines))
+
+
+def _cmd_precio(remote_jid: str, args: str) -> None:
+    if not args:
+        evolution_client.send_text(remote_jid, "❌ Ej: /precio AAPL")
+        return
+    ticker = args.upper().strip()
+    try:
+        mensaje = generar_cotizacion_precio(ticker)
+    except Exception as e:
+        mensaje = f"❌ Error al obtener cotización de *{ticker}*: {e}"
+    evolution_client.send_text(remote_jid, mensaje)
 
 
 def _cmd_perfil(remote_jid: str, query: str) -> None:

@@ -50,6 +50,7 @@ docker compose run --rm bot python -c "..."        # ejecutar código ad-hoc
 - Las alertas bursátiles viven en `core/alerts.py` (ticker lists, fetch, build, save). El comando `/alerta TICKER1 TICKER2...` se maneja en `flows/inbound/commands.py` y también usa `core/alerts.py`. No hay más lógica duplicada.
 - Las funciones `send_text` y `send_text_to_destinations` en evolution_client usan `print()` para logging (no `logging`).
 - No hay `.env` loading automático en `run_broadcast.py` ni `run_inbound.py` — las variables se inyectan via `env_file: .env` en docker-compose. El CRM worker sí usaba `load_dotenv()` pero fue eliminado en refactor.
+- `add_participant_to_group` acepta tanto el número en solo dígitos (ej: `5491123456789`) como el JID completo (`5491123456789@s.whatsapp.net`). Evolution API maneja ambos formatos. El inbound pasa el JID completo (linea 201) y funciona bien.
 
 ## Archivos que no deben modificarse sin cuidado
 

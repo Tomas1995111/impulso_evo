@@ -80,8 +80,18 @@ def generar_mensaje_vencimiento():
     )
 
 
+# ── Pool de saludos diarios rotativos ────────────────────────────────────────
+SALUDOS_DIARIOS = [
+    "📊 *Buenos días, Impulso.*\nEn un minuto te llegan los índices y la noticia del día.",
+    "🌅 *Arrancó el día, Impulso.*\nPrepará el café que en un toque tenés el panorama completo.",
+    "☀️ *Arrancamos con todo.*\nEn unos minutos compartimos el resumen del día para que no te pierdas nada.",
+    "📈 *Vamos por un nuevo día.*\nEn breve compartimos los números y la noticia para arrancar informado.",
+]
+
+
 # ── Resolver de mensajes especiales ──────────────────────────────────────────
 MENSAJES_ESPECIALES = {
+    "saludo_diario": lambda: random.choice(SALUDOS_DIARIOS),
     "cotizacion_dolar": generar_cotizacion_dolar,
     "resumen_indices": generar_mensaje_indices,
     "noticia_mercado": generar_mensaje_resumen,
@@ -115,7 +125,7 @@ def resolver_mensaje(texto, test_mode: bool = False, test_url: str = None):
 
 # ── Mensajes programados
 mensajes_semana = [
-    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "09:30", "mensaje": "💪 *Muy buenos días, Impulsores.*\nHoy es una nueva oportunidad para seguir creciendo juntos.", "grupo": [config.PREMIUM]},
+    {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "09:30", "mensaje": "saludo_diario", "grupo": [config.PREMIUM]},
     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "09:30", "mensaje": "resumen_indices", "grupo": [config.PREMIUM]},
     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "09:30", "mensaje": "noticia_mercado", "grupo": [config.PREMIUM]},
     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:02", "mensaje": "alerta_bursatil", "grupo": [config.REVISION]},
@@ -124,7 +134,8 @@ mensajes_semana = [
     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "11:02", "mensaje": "alerta_bursatil_arg", "grupo": [config.REVISION]},
     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "15:30", "mensaje": "cotizacion_dolar", "grupo": [config.PREMIUM]},
     {"dias": ["fri"], "hora": "13:30", "mensaje": "💰 *¡No te olvides de caucionar lo líquido este finde semana!*", "grupo": [config.PREMIUM]},
-    {"dias": ["tue"], "hora": "16:00", "mensaje": f"🎁 *¡Invitá a un amigo y ganan los dos!*\n\nSi alguien se suscribe con este link 👇\n{SUSCRIPCION_PREMIUM_30D}\n*y nos dice que vos lo invitaste*, te bonificamos *tu próximo pago* 💸\n\n👥 *¿Cómo funciona?*\n1️⃣ Compartí el link con quien creas que le puede servir\n2️⃣ Cuando se sume, que nos escriba: *\"Me invitó Juan\"*\n3️⃣ ¡Ambos reciben *30 días gratis*!\n\n📩 *Ante cualquier duda, escribime por privado.*", "grupo": [config.PREMIUM]},
+    {"dias": ["tue"], "hora": "15:00", "mensaje": "🔑 *Sumate como inversor asesorado.*\n\nDesignanos como asesores en tu broker (PPI, IOL, Balanz, etc.). No te cuesta nada y nosotros te hacemos el seguimiento de tu cartera.\n\nEscribime al privado y te paso los datos para la designación en 2 minutos.", "grupo": [config.PREMIUM]},
+    {"dias": ["tue"], "hora": "16:00", "mensaje": f"🎁 *Invitá a un amigo y ganan los DOS.*\n\nCuando alguien se suscribe con tu link y dice que vos lo invitaste, los dos reciben **30 días gratis**.\n\n👉 {SUSCRIPCION_PREMIUM_30D}", "grupo": [config.PREMIUM]},
     {"dias": ["tue"], "hora": "17:30", "mensaje": "dinamico_motivacional", "grupo": [config.PREMIUM]},
     {"dias": ["wed"], "hora": "17:30", "mensaje": "dinamico_miercoles", "grupo": [config.PREMIUM]},
     {"dias": ["fri"], "hora": "17:30", "mensaje": "dinamico_viernes", "grupo": [config.PREMIUM]},
@@ -202,7 +213,7 @@ def _run_startup_test(test_mode: bool = False):
 def main(test_mode: bool = False):
     _run_startup_test(test_mode)
 
-    scheduler = BlockingScheduler(timezone="America/Argentina/Buenos_Aires")
+    scheduler = BlockingScheduler(timezone=config.TIMEZONE)
 
     for msg in mensajes_semana:
         grupo = msg.get("grupo", config.GRUPO_DEFAULT)
@@ -214,16 +225,20 @@ def main(test_mode: bool = False):
             day_of_week=dias_cron,
             hour=int(hora),
             minute=int(minuto),
+            misfire_grace_time=300,
             args=[grupo, msg["mensaje"]],
         )
 
     for msg in mensajes_fecha:
         grupo = msg.get("grupo", config.GRUPO_DEFAULT)
         fecha_dt = datetime.strptime(msg["fecha"], "%d/%m/%Y %H:%M")
+        if fecha_dt < datetime.now():
+            continue
         scheduler.add_job(
             enviar_mensaje,
             "date",
             run_date=fecha_dt,
+            misfire_grace_time=300,
             args=[grupo, msg["mensaje"]],
         )
 
@@ -234,6 +249,7 @@ def main(test_mode: bool = False):
         day_of_week="thu",
         hour=11,
         minute=0,
+        misfire_grace_time=300,
         args=[config.PREMIUM, "vencimiento_opciones"],
     )
 

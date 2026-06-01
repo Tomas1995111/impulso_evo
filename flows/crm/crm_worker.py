@@ -48,13 +48,73 @@ def get_days_diff(date_str: str) -> int:
 
 def get_message(msg_id: int, nombre: str) -> str:
     messages = {
-        1: f"¡Hola, {nombre}! Ya van 3 días de tu prueba gratis. 📈 ¿Cómo venís con la info del grupo? Ojalá te esté sirviendo para bajar a tierra el mercado. Acordate que este grupo es solo un adelanto general (el armado de carteras y los análisis a fondo los hacemos en el Premium). Si tenés alguna duda de lo que mandamos estos días, ¡escribime por acá! Un abrazo.",
-        2: f"¡Hola, {nombre}! Tu prueba gratis está entrando en la recta final. ⏳ Si querés asegurar tu lugar para no perderte nada y pasar al Grupo Premium, podés activar tu membresía acá: 👉 {SUSCRIPCION_PREMIUM} Ahí adentro sumamos carteras sugeridas de CEDEARs/acciones, informes completos y mi acompañamiento en este privado para tus dudas al invertir. ¡Te espero!",
-        3: f"¡Últimas 24 horas de prueba, {nombre}! ⚠️ Mañana el bot te va a remover automáticamente del grupo Free. Si te sirvió este vistazo para entender el mercado, mantené la constancia y sumate de forma definitiva al Premium acá: 👉 {SUSCRIPCION_PREMIUM} ¡Te espero del lado de adentro! 🚀",
-        4: f"{nombre}, terminó tu prueba y el sistema te removió del grupo. ⏱️ Si querés seguir bien informado y subir de nivel al Grupo Premium (para ver carteras recomendadas, análisis y soporte privado), suscribite acá: 👉 {SUSCRIPCION_PREMIUM} Apenas pagues, mandame el comprobante por acá así te sumo de inmediato al Premium. ¡Gracias por compartir esta semana! 👍",
-        5: f"¡Hola {nombre}! Se cumplen dos semanas desde que terminó tu prueba en Impulso Merval. 📈 Como sé que el mercado argentino no da respiro y estos días pasaron cosas clave (tasas, inflación, etc.), quiero darte un empujón para que vuelvas bien informado. Te armé un cupón especial del 30% de descuento para tu primer mes en el Grupo Premium. Activalo acá: 👉 {SUSCRIPCION_PREMIUM_30D} ¡Te espero adentro para acomodar tus inversiones de este mes! 🚀",
-        6: f"¡Hola {nombre}! Te escribo rápido porque el mercado y la economía acá nunca dan respiro. ⚠️ En el Grupo Premium actualizamos las estrategias todas las semanas para defender los ahorros de la comunidad y aprovechar las oportunidades en CEDEARs antes de que sea tarde. Si querés dejar de adivinar qué hacer con tu plata y ver nuestras carteras sugeridas, sumate de forma definitiva acá: 👉 {SUSCRIPCION_PREMIUM} ¡Buenas inversiones! 👍",
-        7: f"¡Hola {nombre}! Hace un par de meses que dejaste el Grupo Premium de Impulso Merval y se te extraña en la comunidad. 📈 Te escribía porque seguimos sumando carteras sugeridas, nuevos análisis y puliendo el formato para darte la información cada vez más directa y filtrada. Como ya fuiste parte de la comunidad, si querés volver te mantengo el precio anterior congelado por 3 meses como beneficio exclusivo. Podés reactivar tu acceso definitivo acá: 👉 {SUSCRIPCION_PREMIUM} ¡Un abrazo y buenas inversiones! 🚀"
+        1: (
+            f"¡Hola {nombre}! Ya llevás 3 días con nosotros — ¿qué tal vienes? 📊\n\n"
+            "Esto que ves en el grupo es una muestra de lo que armamos todos los días. "
+            "Adentro del Premium no solo tenés el resumen, directamente tenés carteras "
+            "sugeridas y análisis que te ahorran horas de leer solo.\n\n"
+            "Si algo no se entiende o querés profundizar en algún tema, "
+            "contestame por acá sin vueltas.\n\n"
+            "—Tomás"
+        ),
+        2: (
+            f"¡Hola {nombre}! Esto ya se empieza a poner bueno. ⏳\n\n"
+            "Te quedan un par de días de prueba. Pasarte al Premium es "
+            "simplemente dejar de recibir información suelta y empezar a tener "
+            "un plan concreto para tu plata: carteras de CEDEARs, informes "
+            "que te ahorran horas, y soporte directo cuando tengas dudas.\n\n"
+            f"{SUSCRIPCION_PREMIUM}\n\n"
+            "Cualquier duda, respondeme. —Tomás"
+        ),
+        3: (
+            f"{nombre}, mañana se termina tu prueba ⚠️\n\n"
+            "Si te gustó tener el mercado resumido todos los días sin tener "
+            "que perseguir las noticias, esto es solo el aperitivo. Adentro "
+            "del Premium ves dónde poner la plata, no solo lo que pasó.\n\n"
+            f"{SUSCRIPCION_PREMIUM}\n\n"
+            "Mañana temprano mando el resumen diario, no te lo pierdas.\n"
+            "—Tomás"
+        ),
+        4: (
+            f"Hola {nombre}, se terminó la semana de prueba. 🙌\n\n"
+            "Ojalá te haya servido para ver el mercado más claro. "
+            "La puerta del Premium sigue abierta cuando quieras:\n\n"
+            f"{SUSCRIPCION_PREMIUM}\n\n"
+            "Apenas te suscribís, mandame el comprobante y te agrego al toque. "
+            "Sin vueltas.\n\n"
+            "—Tomás"
+        ),
+        5: (
+            f"{nombre}, te tengo una oferta exprés: "
+            f"**30% OFF en tu primer mes** del Grupo Premium. 🎁\n\n"
+            "Por menos de lo que gastás en un café por día te sumás y ves "
+            "todo lo que hacemos adentro: carteras sugeridas, alertas, "
+            "análisis, y soporte directo cuando lo necesites.\n\n"
+            f"{SUSCRIPCION_PREMIUM_30D}\n\n"
+            "Si te interesa, no le des muchas vueltas.\n"
+            "—Tomás"
+        ),
+        6: (
+            f"¡Hola {nombre}! El mercado no para y cada semana ajustamos "
+            f"carteras y estrategias en el Premium. 📈\n\n"
+            "La gente adentro ya no tiene que estar pendiente de 20 fuentes "
+            "distintas. Le llega todo filtrado, con sugerencia de qué hacer.\n\n"
+            "Si te interesa invertir con menos ruido y más claridad:\n\n"
+            f"{SUSCRIPCION_PREMIUM}\n\n"
+            "Cuando quieras, estoy acá.\n"
+            "—Tomás"
+        ),
+        7: (
+            f"Hola {nombre}, te llegó un beneficio exclusivo por haber sido "
+            f"parte del Premium: **tu precio anterior congelado por 3 meses** "
+            f"si volvés ahora. 🚀\n\n"
+            "No sé si viste, pero venimos sumando carteras nuevas y el grupo "
+            "está cada vez más activo. Si en su momento te servía, "
+            "hoy está mejor.\n\n"
+            f"{SUSCRIPCION_PREMIUM}\n\n"
+            "Apenas te suscribís, avisame y te pongo al día con todo.\n"
+            "—Tomás"
+        ),
     }
     return messages.get(msg_id, "")
 
@@ -160,11 +220,8 @@ def process_crm():
 
     if batch_updates:
         try:
-            cells_to_update = []
-            for row_idx, col_idx, val in batch_updates:
-                cell = worksheet.cell(row_idx, col_idx)
-                cell.value = val
-                cells_to_update.append(cell)
+            from gspread import Cell
+            cells_to_update = [Cell(row=r, col=c, value=v) for r, c, v in batch_updates]
             worksheet.update_cells(cells_to_update)
             logger.info(f"✅ Batch update completado: {len(cells_to_update)} celdas actualizadas.")
         except Exception as e:

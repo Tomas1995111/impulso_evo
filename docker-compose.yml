@@ -72,11 +72,13 @@ services:
     env_file: .env
     environment:
       PYTHONUNBUFFERED: 1
+      TZ: America/Argentina/Buenos_Aires
     depends_on:
       evolution_api:
         condition: service_healthy
     volumes:
       - ./estado_mensajes.json:/app/estado_mensajes.json
+      - ./estado_dolar.json:/app/estado_dolar.json
       - ./contenido:/app/contenido
 
   bot_inbound:
@@ -87,6 +89,7 @@ services:
     env_file: .env
     environment:
       PYTHONUNBUFFERED: 1
+      TZ: America/Argentina/Buenos_Aires
     ports:
       - "8000:8000"
     depends_on:
@@ -106,6 +109,7 @@ services:
     env_file: .env
     environment:
       PYTHONUNBUFFERED: 1
+      TZ: America/Argentina/Buenos_Aires
     depends_on:
       evolution_api:
         condition: service_healthy

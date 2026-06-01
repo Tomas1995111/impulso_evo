@@ -38,10 +38,10 @@ class TestGetDaysDiff:
 class TestGetMessage:
     @pytest.mark.parametrize("msg_id,nombre,expected_substring", [
         (1, "Juan", "3 días"),
-        (2, "María", "recta final"),
-        (3, "Pedro", "últimas 24"),
-        (4, "Ana", "te removió"),
-        (5, "Luis", "30% de descuento"),
+        (2, "María", "poner bueno"),
+        (3, "Pedro", "se termina tu prueba"),
+        (4, "Ana", "semana de prueba"),
+        (5, "Luis", "30% OFF"),
         (6, "Sofía", "estrategias"),
         (7, "Carlos", "precio anterior"),
     ])

@@ -1,8 +1,12 @@
 # mensajes/mensajeCotizacionesDolar.py
+import json
+from datetime import datetime
+
 import requests
 
 URL = "https://dolarapi.com/v1/dolares"
 HEADERS = {"User-Agent": "Mozilla/5.0"}
+ESTADO_DOLAR_FILE = "estado_dolar.json"
 
 ORDEN_CASAS = [
     "oficial",
@@ -34,6 +38,30 @@ def _fmt_ar(valor):
     except Exception:
         return "—"
 
+def _fmt_pct(cambio):
+    if cambio is None:
+        return ""
+    s = f"+{cambio:.2f}%" if cambio >= 0 else f"{cambio:.2f}%"
+    return s.replace(".", ",")
+
+
+def _load_estado_dolar():
+    try:
+        with open(ESTADO_DOLAR_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+
+
+def _save_estado_dolar(valores_por_casa):
+    try:
+        hoy = datetime.now().strftime("%d/%m/%Y")
+        with open(ESTADO_DOLAR_FILE, "w", encoding="utf-8") as f:
+            json.dump({"fecha": hoy, "valores": valores_por_casa}, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        print(f"[ERROR] No se pudo guardar {ESTADO_DOLAR_FILE}: {e}")
+
+
 def generar_cotizacion_dolar():
     try:
         r = requests.get(URL, headers=HEADERS, timeout=12)
@@ -64,6 +92,17 @@ def generar_cotizacion_dolar():
         if not por_casa:
             return "[!] La API no devolvió cotizaciones utilizables."
 
+        # Cargar estado anterior para comparativa día contra día
+        estado_anterior = _load_estado_dolar()
+        hoy = datetime.now().strftime("%d/%m/%Y")
+        usar_comparativa = (
+            estado_anterior is not None
+            and estado_anterior.get("fecha") != hoy
+        )
+        valores_previos = estado_anterior.get("valores", {}) if usar_comparativa else {}
+
+        valores_a_guardar = {}
+
         # Armado del mensaje
         lineas = ["💵 *Cotizaciones del Dólar* 💵", ""]
 
@@ -89,11 +128,37 @@ def generar_cotizacion_dolar():
 
             emoji = EMOJIS.get(key, "💵")
             compra = _fmt_ar(item["compra"])
-            venta  = _fmt_ar(item["venta"])
+            venta_fmt = _fmt_ar(item["venta"])
+
+            # Valor numérico de venta para comparar y guardar
+            venta_num = None
+            try:
+                venta_num = float(item["venta"]) if item.get("venta") is not None else None
+            except (ValueError, TypeError):
+                pass
+
+            if venta_num is not None:
+                valores_a_guardar[key] = venta_num
+
+            # Comparativa vs día anterior
+            cambio_pct = None
+            flecha = ""
+            if key in valores_previos:
+                prev = valores_previos[key]
+                if prev is not None and venta_num is not None and prev != 0:
+                    diff = venta_num - prev
+                    cambio_pct = (diff / prev) * 100
+                    flecha = " 📈" if cambio_pct > 0 else (" 📉" if cambio_pct < 0 else " ➡️")
+
+            venta_line = venta_fmt
+            if cambio_pct is not None:
+                venta_line += f" ({_fmt_pct(cambio_pct)}{flecha})"
 
             lineas.append(f"{emoji} *{nombre}*")
-            lineas.append(f"Compra: {compra} | Venta: {venta}")
+            lineas.append(f"Compra: {compra} | Venta: {venta_line}")
             lineas.append("")
+
+        _save_estado_dolar(valores_a_guardar)
 
         return "\n".join(lineas).strip()
 

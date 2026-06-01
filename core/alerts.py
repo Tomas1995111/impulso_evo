@@ -45,7 +45,7 @@ def fetch_stock_data(ticker: str) -> dict:
     accion = yf.Ticker(ticker)
     info = accion.info
 
-    hist = accion.history(period="max")
+    hist = accion.history(period="5y")
     max_historico = hist["High"].max() if not hist.empty else None
 
     return {
@@ -123,6 +123,8 @@ def _check_buy_condition(data: dict) -> bool:
 def generate_ticker_alert(ticker: str, sheet_id: str | None = None) -> str:
     """Genera alerta para un ticker sin filtrar por condición de compra."""
     data = fetch_stock_data(ticker)
+    if not data.get("precio_actual"):
+        return f"❌ No se pudieron obtener datos para {ticker}."
     levels = _calc_levels(data["precio_actual"])
     mensaje = build_alert_text(data, levels)
 

@@ -19,8 +19,9 @@ store = ConversationStateStore()
 
 
 MSG_ASK_NAME = (
-    "¡Excelente! Ya estás a un paso de empezar tu prueba. "
-    "Para habilitar tu acceso, por favor decime tu nombre completo."
+    "¡Qué bueno que quieras sumarte! 📊 "
+    "Te voy a dar acceso al grupo de prueba para que arranques con el resumen diario. "
+    "Primero, decime tu nombre."
 )
 
 
@@ -30,6 +31,20 @@ def _normalize(s: str) -> str:
     return s
 
 
+TRIGGER_PHRASES = [
+    "prueba gratis",
+    "prueba gratuita",
+    "quiero info",
+    "me interesa",
+    "quiero sumarme",
+    "cómo entro",
+    "como entro",
+    "quiero entrar",
+    "dame acceso",
+    "info",
+]
+
+
 def _origin_from_text(text: str) -> str:
     t = _normalize(text)
     if "prueba gratis" in t:
@@ -37,6 +52,14 @@ def _origin_from_text(text: str) -> str:
     if "prueba gratuita" in t:
         return "TikTok"
     return ""
+
+
+def _es_trigger(text_norm: str) -> bool:
+    if not text_norm:
+        return False
+    if "impulso" in text_norm or "merval" in text_norm or "mercado" in text_norm:
+        return True
+    return any(phrase in text_norm for phrase in TRIGGER_PHRASES)
 
 
 def _extract_text(message_obj: Any) -> str:
@@ -140,8 +163,14 @@ async def messages_upsert(request: Request) -> dict:
             handle_command(remote_jid, text)
             return {"ok": True, "state": "idle"}
 
-        origen = _origin_from_text(text_norm)
-        if "impulso merval" in text_norm and "prueba" in text_norm:
+        if _es_trigger(text_norm):
+            try:
+                from core.sheets_client import phone_exists
+                if phone_exists(phone):
+                    return {"ok": True, "state": "idle"}
+            except Exception:
+                pass
+            origen = _origin_from_text(text_norm)
             store.start(phone=phone, origen=origen)
             evolution_client.send_text(remote_jid, MSG_ASK_NAME)
             return {"ok": True, "state": "awaiting_name"}
@@ -157,9 +186,9 @@ async def messages_upsert(request: Request) -> dict:
         store.set_name(phone, nombre)
         evolution_client.send_text(
             remote_jid,
-            f"¡Gracias {nombre}! Y por último, ¿cuál es tu correo electrónico?",
+            f"¡Gracias {nombre}! Ahora pasame tu mail y en un toque estás adentro.",
         )
-        store.set_state(phone, "awaiting_email")
+        store.set_state_with_ts(phone, "awaiting_email")
         return {"ok": True, "state": "awaiting_email"}
 
     # 3) Mail (sin validación pesada)
@@ -192,25 +221,23 @@ async def messages_upsert(request: Request) -> dict:
             print(f"[ERROR] No se pudo guardar lead en Google Sheets: {e}")
 
         final_msg = (
-            f"¡Excelente, {nombre}! 🚀\n\n"
-            "Ya te sumé al grupo para que arranques tus 7 días de prueba gratis.\n\n"
-            "Así va a funcionar:\n"
-            "🔇 Es silencioso: Solo los administradores mandamos información para no llenarte de notificaciones.\n"
-            "📈 Información útil: Recibís el resumen diario del mercado e ideas de inversión explicadas bien simple.\n"
-            "💬 Dudas: El grupo no se abre, pero cualquier pregunta me la podés mandar por acá mismo en privado.\n\n"
-            "¡Bienvenido a Impulso Merval! Estate atento al grupo que estaremos enviando info. 📊"
+            f"Listo {nombre}, ya estás adentro del grupo de prueba 🚀\n\n"
+            "La dinámica acá es simple:\n"
+            "📬 Por la mañana te llega el resumen del día con lo más importante del mercado.\n"
+            "📈 Estrategias re masticadas para que sepas qué hacer.\n"
+            "💬 Cualquier duda, me escribís por acá sin problema.\n\n"
+            "¡Bienvenido a Impulso Merval! Mañana arrancamos temprano 📊\n"
+            "—Juan"
         )
         if not added:
             final_msg = (
-                f"¡Excelente, {nombre}! 🚀\n\n"
-                "Ya registré tus datos. En unos minutos te sumo al grupo de la prueba.\n\n"
-                "Si no te llega la invitación, respondeme por acá y lo resolvemos."
+                f"Listo {nombre}, ya cargué tus datos. En un par de minutos te agrego al grupo de prueba.\n\n"
+                "Si no aparecés, decime por acá y lo vemos al toque."
             )
         elif not sheet_saved:
             final_msg = (
-                f"¡Excelente, {nombre}! 🚀\n\n"
-                "Ya te sumé al grupo para que arranques tu prueba gratis.\n\n"
-                "Si ves algo raro en el alta, escribime por acá y lo resolvemos enseguida."
+                f"Ya te sumé al grupo de prueba {nombre}! 🚀\n\n"
+                "Cualquier cosa que necesites, respondeme por acá."
             )
 
         evolution_client.send_text(remote_jid, final_msg)

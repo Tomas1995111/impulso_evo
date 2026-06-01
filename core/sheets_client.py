@@ -17,9 +17,15 @@ SCOPES = [
 ]
 
 
+_client_cache: gspread.Client | None = None
+
+
 def _client_from_service_account_json(
     credentials_path: str | None = None,
 ) -> gspread.Client:
+    global _client_cache
+    if _client_cache is not None:
+        return _client_cache
     if not credentials_path:
         credentials_path = config.CREDENTIALS_FILE
     if not os.path.exists(credentials_path):
@@ -27,7 +33,8 @@ def _client_from_service_account_json(
             f"No se encontró '{credentials_path}'. Copialo desde mensajes/credenciales.example.json"
         )
     creds = ServiceAccountCredentials.from_json_keyfile_name(credentials_path, SCOPES)
-    return gspread.authorize(creds)
+    _client_cache = gspread.authorize(creds)
+    return _client_cache
 
 
 def append_lead_row(
@@ -128,3 +135,15 @@ def search_leads(query: str) -> list[dict]:
             results.append(dict(zip(headers, row)))
 
     return results
+
+
+def phone_exists(phone: str) -> bool:
+    """Retorna True si el teléfono ya está en el Sheet de leads (columna 1)."""
+    client = _client_from_service_account_json()
+    sh = client.open_by_key(config.LEADS_SHEET_ID)
+    ws = sh.worksheet(config.LEADS_SHEET_TAB)
+    phone_digits = re.sub(r"\D+", "", phone)
+    for row in ws.get_all_values()[1:]:
+        if re.sub(r"\D+", "", (row[0] or "").strip()) == phone_digits:
+            return True
+    return False

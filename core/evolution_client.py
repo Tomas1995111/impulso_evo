@@ -85,22 +85,26 @@ def send_text_to_destinations(grupo, texto: str) -> None:
         numero = dest if "@" in dest else f"{dest}@g.us"
         payload = {"number": numero, "text": texto}
         try:
-            res = requests.post(url, json=payload, headers=hdrs)
+            res = requests.post(url, json=payload, headers=hdrs, timeout=15)
             logger.info(f"Enviado a {numero}. Estado: {res.status_code}")
         except Exception as e:
             logger.error(f"No se pudo enviar a {numero}: {e}")
 
 
-def send_text(jid: str, texto: str) -> None:
-    """Envía texto a un JID exacto (ej: 54911...@s.whatsapp.net o ...@g.us)."""
+def send_text(jid: str, texto: str) -> bool:
+    """Envía texto a un JID exacto (ej: 54911...@s.whatsapp.net o ...@g.us).
+    Retorna True si se envió correctamente."""
     if not jid or not texto:
-        return
+        return False
     payload = {"number": jid, "text": texto}
     try:
-        res = requests.post(url_send_text(), json=payload, headers=headers())
+        res = requests.post(url_send_text(), json=payload, headers=headers(), timeout=15)
+        ok = 200 <= res.status_code < 300
         logger.info(f"Enviado a {jid}. Estado: {res.status_code}")
+        return ok
     except Exception as e:
         logger.error(f"No se pudo enviar a {jid}: {e}")
+        return False
 
 
 @_evolution_retry(max_retries=2, base_delay=2.0)

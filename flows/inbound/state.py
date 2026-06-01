@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import time
 from typing import Optional
 
 import redis
@@ -16,7 +17,10 @@ class ConversationStateStore:
     """
 
     def __init__(self, redis_client: Optional[redis.Redis] = None) -> None:
-        self._r = redis_client or redis.Redis(host="redis", port=6379, decode_responses=True)
+        self._r = redis_client or redis.Redis(
+            host="redis", port=6379, decode_responses=True,
+            socket_connect_timeout=3, socket_timeout=3,
+        )
 
     def _key(self, phone: str) -> str:
         return f"inbound:{phone}"
@@ -34,6 +38,14 @@ class ConversationStateStore:
     def set_state(self, phone: str, state: str) -> None:
         data = self._get_data(phone) or {}
         data["state"] = state
+        self._set_data(phone, data)
+
+    def set_state_with_ts(self, phone: str, state: str) -> None:
+        """set_state + timestamp para detectar abandonos."""
+        data = self._get_data(phone) or {}
+        data["state"] = state
+        if state == "awaiting_email":
+            data["awaiting_since"] = time.time()
         self._set_data(phone, data)
 
     def start(self, *, phone: str, origen: str) -> None:

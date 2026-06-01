@@ -25,13 +25,16 @@ def generar_mensaje_indices():
     }
 
     # Descargamos datos con group_by para mejor formato
-    data = yf.download(
-        tickers=list(tickers.keys()),
-        period="3d",
-        interval="1d",
-        group_by="ticker",
-        threads=True
-    )
+    try:
+        data = yf.download(
+            tickers=list(tickers.keys()),
+            period="3d",
+            interval="1d",
+            group_by="ticker",
+            threads=True
+        )
+    except Exception:
+        return "❌ No se pudo obtener información del mercado."
 
     if data.empty:
         return "❌ No se pudo obtener información del mercado."
