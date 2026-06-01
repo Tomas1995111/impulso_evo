@@ -47,8 +47,10 @@ def fetch_stock_data(ticker: str) -> dict:
     accion = yf.Ticker(ticker)
     info = accion.info
 
-    hist = accion.history(period="5y")
-    max_historico = hist["High"].max() if not hist.empty else None
+    hist = accion.history(period="1y")
+    sma_50 = hist["Close"].rolling(50).mean().iloc[-1] if len(hist) >= 50 else None
+    sma_200 = hist["Close"].rolling(200).mean().iloc[-1] if len(hist) >= 200 else None
+    max_52w = hist["High"].max() if not hist.empty else None
 
     return {
         "ticker": ticker,
@@ -57,7 +59,9 @@ def fetch_stock_data(ticker: str) -> dict:
         "variacion_pct": info.get("regularMarketChangePercent"),
         "max_dia": info.get("dayHigh"),
         "min_dia": info.get("dayLow"),
-        "max_historico": max_historico,
+        "sma_50": sma_50,
+        "sma_200": sma_200,
+        "max_52w": max_52w,
         "capitalizacion_bursatil": info.get("marketCap"),
         "pe_ratio": info.get("trailingPE"),
         "rendimiento_dividendos": info.get("dividendYield"),
@@ -70,19 +74,30 @@ def _is_arg_ticker(ticker: str) -> bool:
     return ticker.upper().endswith(".BA")
 
 
-def _calc_levels(precio: float) -> dict:
-    """Calcula PE, stop loss y take profits."""
+def _calc_levels(precio: float, max_dia: float | None = None, min_dia: float | None = None) -> dict:
+    """Calcula PE, stop loss y take profits basados en volatilidad diaria."""
     PE = math.floor(precio)
-    SL_pct = -random.uniform(6, 14) / 100
-    SL = math.floor(PE * (1 + SL_pct))
-    R = abs(SL_pct)
+
+    # SL basado en rango diario, clamp 6%-18%
+    raw_sl = 0.08
+    if max_dia and min_dia and max_dia > min_dia:
+        raw_sl = (max_dia - min_dia) * 2 / precio
+
+    if raw_sl > 0.18:
+        raise ValueError(f"SL calculado ({raw_sl*100:.0f}%) supera el máximo permitido de 18%")
+
+    sl_pct = max(0.06, raw_sl)
+    SL = round(PE * (1 - sl_pct))
+    actual_pct = (PE - SL) / PE
+    R = abs(actual_pct)
+
     return {
         "PE": PE,
         "SL": SL,
-        "SL_pct": SL_pct,
-        "TP1": math.floor(PE * (1 + R * 0.9)),
-        "TP2": math.floor(PE * (1 + R * 1.8)),
-        "TP3": math.floor(PE * (1 + R * 2.6)),
+        "SL_pct": actual_pct,
+        "TP1": round(PE * (1 + R * 0.9)),
+        "TP2": round(PE * (1 + R * 1.8)),
+        "TP3": round(PE * (1 + R * 2.6)),
     }
 
 
@@ -109,17 +124,27 @@ def build_alert_text(data: dict, levels: dict | None = None) -> str:
 
 
 def _check_buy_condition(data: dict) -> bool:
-    """Evalúa si el activo cumple condición de compra (recomendación buy + descuento de max histórico)."""
+    """Evalúa si el activo cumple condición de compra (score >= 3 de 4 criterios)."""
     precio = data.get("precio_actual")
-    max_hist = data.get("max_historico")
+    sma_50 = data.get("sma_50")
+    sma_200 = data.get("sma_200")
+    max_52w = data.get("max_52w")
     reco = data.get("recomendacion")
 
-    if max_hist is None or precio is None:
+    if None in (precio, sma_50, sma_200):
         return False
-    if reco is None or str(reco).lower() == "none":
-        reco = "buy"
 
-    return reco.lower() in ("buy", "strong_buy", "strongbuy") and precio < 0.8 * max_hist
+    score = 0
+    if precio > sma_50:
+        score += 1
+    if sma_50 > sma_200:
+        score += 1
+    if max_52w and 0.78 * max_52w < precio < 0.98 * max_52w:
+        score += 1
+    if reco and reco.lower() in ("buy", "strong_buy", "strongbuy"):
+        score += 1
+
+    return score >= 3
 
 
 def generate_ticker_alert(ticker: str, sheet_id: str | None = None) -> str:
@@ -127,7 +152,10 @@ def generate_ticker_alert(ticker: str, sheet_id: str | None = None) -> str:
     data = fetch_stock_data(ticker)
     if not data.get("precio_actual"):
         return f"❌ No se pudieron obtener datos para {ticker}."
-    levels = _calc_levels(data["precio_actual"])
+    try:
+        levels = _calc_levels(data["precio_actual"], data.get("max_dia"), data.get("min_dia"))
+    except ValueError as e:
+        return f"❌ {ticker}: {e}"
     mensaje = build_alert_text(data, levels)
 
     fecha = datetime.date.today().strftime("%Y-%m-%d")
@@ -141,7 +169,7 @@ def generate_ticker_alert(ticker: str, sheet_id: str | None = None) -> str:
 
 
 def search_alert_condition(tickers: list[str], sheet_id: str | None = None) -> str | None:
-    """Busca aleatoriamente entre tickers el primero que cumpla condición de compra. (legacy)"""
+    """Busca aleatoriamente entre tickers el primero que cumpla condición de compra."""
     remaining = tickers.copy()
     random.shuffle(remaining)
 
@@ -149,7 +177,7 @@ def search_alert_condition(tickers: list[str], sheet_id: str | None = None) -> s
         try:
             data = fetch_stock_data(ticker)
             if _check_buy_condition(data):
-                levels = _calc_levels(data["precio_actual"])
+                levels = _calc_levels(data["precio_actual"], data.get("max_dia"), data.get("min_dia"))
                 mensaje = build_alert_text(data, levels)
 
                 fecha = datetime.date.today().strftime("%Y-%m-%d")
