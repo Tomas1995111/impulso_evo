@@ -1,15 +1,17 @@
 """Lógica compartida de alertas bursátiles (US y ARG)."""
 import datetime
+import logging
 import math
 import os
 import random
 import time
-import traceback
 
 import yfinance as yf
 
 from core import config
 from core import sheets_client
+
+logger = logging.getLogger(__name__)
 
 SHEET_ID = os.getenv("SHEET_ID", config.SHEET_ID)
 
@@ -133,8 +135,7 @@ def generate_ticker_alert(ticker: str, sheet_id: str | None = None) -> str:
     try:
         sheets_client.append_alert_row(fecha, ticker, data["precio_actual"], levels["SL"], sid)
     except Exception:
-        print(f"❌ Error al guardar alerta de {ticker} en Google Sheet")
-        traceback.print_exc()
+            logger.exception("Error al guardar alerta de %s en Google Sheet", ticker)
 
     return mensaje
 
@@ -156,13 +157,12 @@ def search_alert_condition(tickers: list[str], sheet_id: str | None = None) -> s
                 try:
                     sheets_client.append_alert_row(fecha, ticker, data["precio_actual"], levels["SL"], sid)
                 except Exception:
-                    print(f"❌ Error al guardar alerta de {ticker} en Google Sheet")
-                    traceback.print_exc()
+                    logger.exception("Error al guardar alerta de %s en Google Sheet", ticker)
 
                 return mensaje
             time.sleep(1)
         except Exception as e:
-            print(f"⚠️ Error con {ticker}: {e}")
+            logger.warning("Error con %s: %s", ticker, e)
     return None
 
 
@@ -178,4 +178,4 @@ def search_arg_alert(*, sheet_id: str | None = None) -> str | None:
 
 if __name__ == "__main__":
     alerta = search_us_alert() or search_arg_alert()
-    print(alerta or "No hay alertas en este momento.")
+    logger.info(alerta or "No hay alertas en este momento.")

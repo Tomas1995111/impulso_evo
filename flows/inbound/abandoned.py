@@ -4,15 +4,14 @@ import time
 
 import redis
 
+from core import config
 from core import evolution_client
 
-UMBRAL_MINUTOS = 30
-REDIS_HOST = "redis"
-REDIS_PORT = 6379
+UMBRAL_MINUTOS = config.ABANDONED_UMBRAL_MINUTOS
 
 
 def check_abandoned_conversations() -> None:
-    r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True,
+    r = redis.Redis(host=config.REDIS_HOST, port=config.REDIS_PORT, decode_responses=True,
                     socket_connect_timeout=3, socket_timeout=3)
     cursor = 0
     while True:

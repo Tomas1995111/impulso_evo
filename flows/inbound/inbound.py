@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import re
 from datetime import datetime
@@ -12,6 +13,8 @@ from core import config
 from core import evolution_client
 from core import sheets_client
 from flows.inbound.state import ConversationStateStore
+
+logger = logging.getLogger(__name__)
 
 
 app = FastAPI()
@@ -218,7 +221,7 @@ async def messages_upsert(request: Request) -> dict:
             )
         except Exception as e:
             sheet_saved = False
-            print(f"[ERROR] No se pudo guardar lead en Google Sheets: {e}")
+            logger.error("No se pudo guardar lead en Google Sheets: %s", e)
 
         final_msg = (
             f"Listo {nombre}, ya estás adentro del grupo de prueba 🚀\n\n"

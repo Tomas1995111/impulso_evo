@@ -2,6 +2,7 @@
 Mensajes programados a grupos: horarios, resolvers de contenido y envío vía Evolution API.
 """
 import json
+import logging
 import random
 import time
 from datetime import datetime, timedelta
@@ -15,6 +16,8 @@ from core.alerts import search_arg_alert, search_us_alert
 from mensajes.mensajeCotizacionDolar import generar_cotizacion_dolar
 from mensajes.mensajeIndices import generar_mensaje_indices
 from mensajes.mensajeResumen import generar_mensaje_resumen
+
+logger = logging.getLogger(__name__)
 
 # ── Lógica de Mensajes Dinámicos (Rotativos persistentes) ───────────────────
 def obtener_siguiente_mensaje_dinamico(tipo_mensaje):
@@ -48,7 +51,7 @@ def obtener_siguiente_mensaje_dinamico(tipo_mensaje):
             "lista_mezclada": indices_mezclados,
             "proximo_indice": 0,
         }
-        print(f"[INFO] Lista de '{tipo_mensaje}' mezclada de nuevo de forma aleatoria.")
+        logger.info("Lista de '%s' mezclada de nuevo de forma aleatoria.", tipo_mensaje)
 
     # 4. Obtener el mensaje actual usando el índice guardado
     info_tipo = estado[tipo_mensaje]
@@ -118,7 +121,7 @@ def resolver_mensaje(texto, test_mode: bool = False, test_url: str = None):
                 return MENSAJES_ESPECIALES[texto](test_url=use_url)
             return MENSAJES_ESPECIALES[texto]()
         except Exception as e:
-            print(f"[ERROR] No se pudo generar '{texto}': {e}")
+            logger.error("No se pudo generar '%s': %s", texto, e)
             return None
     return texto
 
@@ -162,7 +165,7 @@ mensajes_fecha = [
 def enviar_mensaje(grupo, clave_o_texto, test_mode: bool = False, test_url: str = None):
     texto = resolver_mensaje(clave_o_texto, test_mode=test_mode, test_url=test_url)
     if not texto:
-        print(f"[{datetime.now()}] Mensaje vacío o con error, se omite el envío.")
+        logger.warning("Mensaje vacío o con error, se omite el envío.")
         return
 
     evolution_client.send_text_to_destinations(grupo, texto)
@@ -172,12 +175,12 @@ def _run_startup_test(test_mode: bool = False):
     if not test_mode:
         return
 
-    print("⏳ MODO TEST: Verificando que WhatsApp esté 100% online...")
+    logger.info("MODO TEST: Verificando que WhatsApp esté 100% online...")
     evolution_client.wait_whatsapp_open()
 
-    print("🚀 MODO TEST: Enviando ráfaga inicial de prueba forzada al DEFAULT...")
+    logger.info("MODO TEST: Enviando ráfaga inicial de prueba forzada al DEFAULT...")
 
-    print("📅 Probando mensajes semanales...")
+    logger.info("Probando mensajes semanales...")
     for msg in mensajes_semana:
         if msg.get("mensaje") == "noticia_mercado":
             enviar_mensaje(
@@ -190,7 +193,7 @@ def _run_startup_test(test_mode: bool = False):
             enviar_mensaje(config.GRUPO_DEFAULT, msg["mensaje"], test_mode=test_mode)
         time.sleep(2)
 
-    print("📌 Probando mensajes por fecha específica...")
+    logger.info("Probando mensajes por fecha específica...")
     for msg in mensajes_fecha:
         if msg.get("mensaje") == "noticia_mercado":
             enviar_mensaje(
@@ -203,11 +206,11 @@ def _run_startup_test(test_mode: bool = False):
             enviar_mensaje(config.GRUPO_DEFAULT, msg["mensaje"], test_mode=test_mode)
         time.sleep(2)
 
-    print("📢 Probando vencimiento de opciones...")
+    logger.info("Probando vencimiento de opciones...")
     enviar_mensaje(config.GRUPO_DEFAULT, "vencimiento_opciones", test_mode=test_mode)
     time.sleep(2)
 
-    print("✅ Fin del test inicial.")
+    logger.info("Fin del test inicial.")
 
 
 def main(test_mode: bool = False):
@@ -253,7 +256,7 @@ def main(test_mode: bool = False):
         args=[config.PREMIUM, "vencimiento_opciones"],
     )
 
-    print("⏰ Planificador iniciado. Esperando horarios...")
+    logger.info("Planificador iniciado. Esperando horarios...")
     scheduler.start()
 
 

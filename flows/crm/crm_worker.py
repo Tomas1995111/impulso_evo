@@ -206,8 +206,7 @@ def process_crm():
             if mensaje_id and exito:
                 texto = get_message(mensaje_id, nombre)
                 remote_jid = telefono if "@" in telefono else f"{telefono}@s.whatsapp.net"
-                evolution_client.send_text(remote_jid, texto)
-                exito = True
+                exito = evolution_client.send_text(remote_jid, texto)
 
             if exito:
                 batch_updates.append((idx, COL_ESTADO, nuevo_estado))

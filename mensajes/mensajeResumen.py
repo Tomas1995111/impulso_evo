@@ -23,7 +23,7 @@ def buscar_url_en_sitemap():
     # ─────────────────────────────────────────────────────────────────────────
 
     url_sitemap = "https://www.cnbc.com/sitemap_news.xml"
-    print(f"🔍 [Sitemap] Consultando el mapa de sitio oficial de CNBC...", flush=True)
+    logger.info("Consultando el mapa de sitio oficial de CNBC...")
     
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -32,10 +32,10 @@ def buscar_url_en_sitemap():
     try:
         res = requests.get(url_sitemap, headers=headers, timeout=12)
         if res.status_code != 200:
-            print(f"❌ [Sitemap] Error de servidor al acceder al XML: {res.status_code}", flush=True)
+            logger.error("Error de servidor al acceder al XML: %s", res.status_code)
             return None
-            
-        print(f"📄 [Sitemap] XML descargado ({len(res.text)} caracteres). Buscando patrones para la fecha {fecha_filtro}...", flush=True)
+
+        logger.info("XML descargado (%d caracteres). Buscando patrones para la fecha %s...", len(res.text), fecha_filtro)
         
         # El patrón busca la estructura exacta de la URL usando la fecha elegida
         patron = rf"https://www.cnbc.com/{fecha_filtro}/stocks-making-the-biggest-moves-premarket-[\w-]+.html"
@@ -43,47 +43,47 @@ def buscar_url_en_sitemap():
         
         if urls_encontradas:
             url_final = urls_encontradas[0]
-            print(f"🎯 [Sitemap] ¡URL localizada con éxito!: {url_final}", flush=True)
+            logger.info("URL localizada con éxito: %s", url_final)
             return url_final
-            
-        print(f"⚠️ [Sitemap] No se encontró ninguna nota de premarket para la fecha: {fecha_filtro}", flush=True)
+
+        logger.warning("No se encontró ninguna nota de premarket para la fecha: %s", fecha_filtro)
         return None
         
     except Exception as e:
-        print(f"❌ [Sitemap] Error de red consultando el archivo XML: {e}", flush=True)
+        logger.error("Error de red consultando el archivo XML: %s", e)
         return None
 
 def esperar_y_buscar_url(max_espera_min=70, intervalo_min=5):
     inicio = time.time()
     intento = 0
-    print(f"⏱️ [Planificador] Iniciando rutina de espera del sitemap. Límite: {max_espera_min} minutos.", flush=True)
+    logger.info("Iniciando rutina de espera del sitemap. Límite: %d minutos.", max_espera_min)
     
     while (time.time() - inicio) < max_espera_min * 60:
         intento += 1
-        print(f"\n🔄 [Planificador] Intento #{intento}...", flush=True)
+        logger.info("Intento #%d...", intento)
         url = buscar_url_en_sitemap()
         
         if url:
             return url
             
-        print(f"😴 [Planificador] Nota ausente en el XML. Durmiendo por {intervalo_min} minutos antes del reintento...", flush=True)
+        logger.info("Nota ausente en el XML. Durmiendo por %d minutos antes del reintento...", intervalo_min)
         time.sleep(intervalo_min * 60)
         
-    print("🚨 [Planificador] Se agotó el tiempo de espera en el sitemap sin novedades.", flush=True)
+    logger.warning("Se agotó el tiempo de espera en el sitemap sin novedades.")
     return None
 
 def extraer_html_crudo(url):
     """Descarga el contenido HTML completo de la nota usando requests."""
-    print(f"🚀 [Requests] Descargando HTML de la noticia...", flush=True)
+    logger.info("Descargando HTML de la noticia...")
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
     try:
         res = requests.get(url, headers=headers, timeout=15)
         if res.status_code == 200:
-            print(f"✅ [Requests] HTML descargado correctamente. Tamaño: {len(res.text)} caracteres.", flush=True)
+            logger.info("HTML descargado correctamente. Tamaño: %d caracteres.", len(res.text))
             return res.text
-        print(f"❌ [Requests] Error de servidor al bajar la nota. Estado: {res.status_code}", flush=True)
+        logger.error("Error de servidor al bajar la nota. Estado: %s", res.status_code)
         return None
     except Exception as e:
         logger.error(f"Error de red al descargar el artículo: {e}")
@@ -93,7 +93,7 @@ def _get_gemini_client():
     from google import genai
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
-        print("❌ GEMINI_API_KEY no está configurada.", flush=True)
+        logger.error("GEMINI_API_KEY no está configurada.")
         return None
     return genai.Client(api_key=api_key)
 
@@ -101,14 +101,14 @@ def _get_gemini_client():
 def procesar_con_gemini(html_crudo):
     """Le pasa el HTML crudo a Gemini para que limpie el código basura y devuelva el resumen formateado."""
     if not html_crudo:
-        print("⚠️ [Gemini] Cancelado: El HTML de entrada está vacío.", flush=True)
+        logger.warning("Cancelado: El HTML de entrada está vacío.")
         return None
 
     client = _get_gemini_client()
     if not client:
         return None
 
-    print(f"🧠 [Gemini] Enviando HTML crudo a Gemini 2.5 Flash...", flush=True)
+    logger.info("Enviando HTML crudo a Gemini 2.5 Flash...")
     prompt = (
         "Te voy a pasar el código HTML completo y crudo de un artículo de CNBC. "
         "Tu tarea como analista financiero experto es ignorar todo el código de programación, "
@@ -123,12 +123,12 @@ def procesar_con_gemini(html_crudo):
     )
     
     try:
-        print("📡 [Gemini] Ejecutando llamada a la API de Google GenAI...", flush=True)
+        logger.info("Ejecutando llamada a la API de Google GenAI...")
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=[prompt, html_crudo]
         )
-        print("✨ [Gemini] Procesamiento de IA completado exitosamente.", flush=True)
+        logger.info("Procesamiento de IA completado exitosamente.")
         return response.text.strip()
     except Exception as e:
         logger.error(f"Error crítico invocando la API: {e}")
@@ -143,12 +143,12 @@ def generar_mensaje_resumen(test_url: str = None):
     Si se provee `test_url`, se usará esa URL directamente (modo test). Si no, se
     intentará localizar la nota en el sitemap de CNBC como antes.
     """
-    print("\n🏁 [Inicio] Ejecutando generar_mensaje_resumen()...", flush=True)
+    logger.info("Ejecutando generar_mensaje_resumen()...")
     try:
         # Si estamos en modo test y recibimos una URL de prueba, la usamos
         if test_url:
             url = test_url
-            print(f"🧪 [Test] Usando URL de prueba: {url}", flush=True)
+            logger.info("Usando URL de prueba: %s", url)
         else:
             # Busca el link directo en el mapa de sitio
             url = esperar_y_buscar_url()
@@ -163,10 +163,10 @@ def generar_mensaje_resumen(test_url: str = None):
         mensaje_final = procesar_con_gemini(html_crudo)
 
         if not mensaje_final:
-            print("🛑 [Fin] La IA no logró retornar un bloque de texto válido.", flush=True)
+            logger.warning("La IA no logró retornar un bloque de texto válido.")
             return "[!] No se pudo generar el resumen con la IA."
 
-        print("🎉 [Fin] Resumen de mercado generado con éxito.", flush=True)
+        logger.info("Resumen de mercado generado con éxito.")
         return mensaje_final
 
     except Exception as e:

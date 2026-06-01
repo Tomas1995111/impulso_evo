@@ -1,13 +1,15 @@
 from __future__ import annotations
 
+import logging
 import re
-import traceback
 
 from core import evolution_client
 from core.alerts import generate_ticker_alert
 from core.links import SUSCRIPCION_PREMIUM, SUSCRIPCION_PREMIUM_7D, SUSCRIPCION_PREMIUM_30D
 from core.precio import generar_cotizacion_precio
 from core.sheets_client import search_leads
+
+logger = logging.getLogger(__name__)
 
 LINKS: dict[str, str] = {
     "Suscripción Premium": SUSCRIPCION_PREMIUM,
@@ -92,7 +94,7 @@ def _cmd_perfil(remote_jid: str, query: str) -> None:
             remote_jid,
             f"❌ Error al buscar en Google Sheets: {e}",
         )
-        traceback.print_exc()
+        logger.exception("Error al buscar en Google Sheets")
         return
 
     if not results:
@@ -137,4 +139,4 @@ def _cmd_alerta(remote_jid: str, args: str) -> None:
             evolution_client.send_text(remote_jid, mensaje)
         except Exception as e:
             evolution_client.send_text(remote_jid, f"❌ Error con {ticker}: {e}")
-            traceback.print_exc()
+            logger.exception("Error con ticker %s", ticker)

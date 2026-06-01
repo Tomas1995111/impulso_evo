@@ -39,3 +39,9 @@ LEADS_SHEET_ID = os.getenv(
 )
 LEADS_SHEET_TAB = os.getenv("LEADS_SHEET_TAB", "Maestro")
 TRIAL_GROUP_JID = os.getenv("TRIAL_GROUP_JID", FREE or "")
+
+# Redis
+REDIS_HOST = os.getenv("REDIS_HOST", "redis")
+REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
+INBOUND_TTL_SECONDS = int(os.getenv("INBOUND_TTL_SECONDS", str(60 * 60 * 6)))  # 6h
+ABANDONED_UMBRAL_MINUTOS = int(os.getenv("ABANDONED_UMBRAL_MINUTOS", "30"))

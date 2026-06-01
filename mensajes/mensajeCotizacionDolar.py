@@ -1,8 +1,11 @@
 # mensajes/mensajeCotizacionesDolar.py
 import json
+import logging
 from datetime import datetime
 
 import requests
+
+logger = logging.getLogger(__name__)
 
 URL = "https://dolarapi.com/v1/dolares"
 HEADERS = {"User-Agent": "Mozilla/5.0"}
@@ -59,7 +62,7 @@ def _save_estado_dolar(valores_por_casa):
         with open(ESTADO_DOLAR_FILE, "w", encoding="utf-8") as f:
             json.dump({"fecha": hoy, "valores": valores_por_casa}, f, indent=2, ensure_ascii=False)
     except Exception as e:
-        print(f"[ERROR] No se pudo guardar {ESTADO_DOLAR_FILE}: {e}")
+        logger.error("No se pudo guardar %s: %s", ESTADO_DOLAR_FILE, e)
 
 
 def generar_cotizacion_dolar():

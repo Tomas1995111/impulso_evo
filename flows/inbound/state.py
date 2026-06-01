@@ -6,6 +6,8 @@ from typing import Optional
 
 import redis
 
+from core import config
+
 
 class ConversationStateStore:
     """Estado mínimo de conversación por teléfono (Redis).
@@ -18,7 +20,7 @@ class ConversationStateStore:
 
     def __init__(self, redis_client: Optional[redis.Redis] = None) -> None:
         self._r = redis_client or redis.Redis(
-            host="redis", port=6379, decode_responses=True,
+            host=config.REDIS_HOST, port=config.REDIS_PORT, decode_responses=True,
             socket_connect_timeout=3, socket_timeout=3,
         )
 
@@ -54,7 +56,7 @@ class ConversationStateStore:
             "origen": origen or "",
             "name": "",
         }
-        self._set_data(phone, data, ttl_seconds=60 * 60 * 6)  # 6h
+        self._set_data(phone, data, ttl_seconds=config.INBOUND_TTL_SECONDS)  # 6h
 
     def set_name(self, phone: str, name: str) -> None:
         data = self._get_data(phone) or {}
@@ -79,5 +81,5 @@ class ConversationStateStore:
         except Exception:
             return None
 
-    def _set_data(self, phone: str, data: dict, ttl_seconds: int = 60 * 60 * 6) -> None:
+    def _set_data(self, phone: str, data: dict, ttl_seconds: int = config.INBOUND_TTL_SECONDS) -> None:
         self._r.set(self._key(phone), json.dumps(data), ex=ttl_seconds) 
