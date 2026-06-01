@@ -1,5 +1,6 @@
 # mensajeResumen.py
 import logging
+import os
 import re
 import time
 
@@ -164,12 +165,11 @@ def generar_mensaje_resumen(test_url: str = None):
 
         if not mensaje_final:
             logger.warning("La IA no logró retornar un bloque de texto válido.")
-            return "[!] No se pudo generar el resumen con la IA."
+            raise RuntimeError("No se pudo generar el resumen con la IA.")
 
         logger.info("Resumen de mercado generado con éxito.")
         return mensaje_final
 
-    except Exception as e:
-        msg = f"[!] Error inesperado generando mensajeResumen: {e}"
-        logger.error(msg)
-        return msg
+    except Exception:
+        logger.exception("Error inesperado generando mensajeResumen")
+        raise

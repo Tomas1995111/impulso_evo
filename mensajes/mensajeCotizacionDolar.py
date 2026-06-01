@@ -69,10 +69,12 @@ def generar_cotizacion_dolar():
     try:
         r = requests.get(URL, headers=HEADERS, timeout=12)
         if r.status_code != 200:
-            return f"[!] No se pudo consultar la API ({r.status_code})."
+            logger.error("No se pudo consultar la API (%s).", r.status_code)
+            raise RuntimeError(f"No se pudo consultar la API ({r.status_code}).")
         data = r.json()
         if not isinstance(data, list) or not data:
-            return "[!] Respuesta inesperada de la API (lista vacía)."
+            logger.error("Respuesta inesperada de la API (lista vacía).")
+            raise RuntimeError("Respuesta inesperada de la API (lista vacía).")
 
         por_casa = {}
         for it in data:
@@ -93,7 +95,8 @@ def generar_cotizacion_dolar():
             }
 
         if not por_casa:
-            return "[!] La API no devolvió cotizaciones utilizables."
+            logger.error("La API no devolvió cotizaciones utilizables.")
+            raise RuntimeError("La API no devolvió cotizaciones utilizables.")
 
         # Cargar estado anterior para comparativa día contra día
         estado_anterior = _load_estado_dolar()
@@ -166,11 +169,14 @@ def generar_cotizacion_dolar():
         return "\n".join(lineas).strip()
 
     except requests.Timeout:
-        return "[!] Tiempo de espera excedido consultando dolarapi.com."
-    except requests.RequestException as e:
-        return f"[!] Error de red consultando dolarapi.com: {e}"
-    except Exception as e:
-        return f"[!] Error inesperado generando cotizaciones: {e}"
+        logger.error("Tiempo de espera excedido consultando dolarapi.com.")
+        raise
+    except requests.RequestException:
+        logger.exception("Error de red consultando dolarapi.com")
+        raise
+    except Exception:
+        logger.exception("Error inesperado generando cotizaciones")
+        raise
 
 if __name__ == "__main__":
     print("\n" + generar_cotizacion_dolar() + "\n")

@@ -1,6 +1,10 @@
+import logging
+
 import yfinance as yf
-yf.set_tz_cache_location("/tmp") # <── Agregá esto para apagar la caché conflictiva
+yf.set_tz_cache_location("/tmp")
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 def generar_mensaje_indices():
     tickers = {
@@ -34,10 +38,12 @@ def generar_mensaje_indices():
             threads=True
         )
     except Exception:
-        return "❌ No se pudo obtener información del mercado."
+        logger.exception("No se pudo obtener información del mercado.")
+        raise
 
     if data.empty:
-        return "❌ No se pudo obtener información del mercado."
+        logger.error("Datos vacíos del mercado.")
+        raise RuntimeError("No se pudo obtener información del mercado.")
 
     mensaje = f"📈 *Impulso del Mercado - {datetime.today().strftime('%d/%m/%Y')}*\n\n"
 
