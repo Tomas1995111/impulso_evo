@@ -19,6 +19,9 @@ from mensajes.mensajeResumen import generar_mensaje_resumen
 
 logger = logging.getLogger(__name__)
 
+CONTENIDO_DIR = config.BASE_DIR / "contenido"
+ESTADO_MENSAJES_FILE = config.BASE_DIR / "estado_mensajes.json"
+
 # ── Lógica de Mensajes Dinámicos (Rotativos persistentes) ───────────────────
 def obtener_siguiente_mensaje_dinamico(tipo_mensaje):
     """
@@ -26,8 +29,7 @@ def obtener_siguiente_mensaje_dinamico(tipo_mensaje):
     Lee el estado actual, envía el que corresponde y avanza el índice.
     Si se terminan, vuelve a mezclar automáticamente.
     """
-    archivo_contenido = f"contenido/{tipo_mensaje}.json"
-    archivo_estado = "estado_mensajes.json"
+    archivo_contenido = CONTENIDO_DIR / f"{tipo_mensaje}.json"
 
     # 1. Cargar el contenido base
     with open(archivo_contenido, "r", encoding="utf-8") as f:
@@ -35,7 +37,7 @@ def obtener_siguiente_mensaje_dinamico(tipo_mensaje):
 
     # 2. Cargar o inicializar el estado
     try:
-        with open(archivo_estado, "r", encoding="utf-8") as f:
+        with open(ESTADO_MENSAJES_FILE, "r", encoding="utf-8") as f:
             estado = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         estado = {}
@@ -63,7 +65,7 @@ def obtener_siguiente_mensaje_dinamico(tipo_mensaje):
     # 5. Actualizar el estado para el PRÓXIMO envío
     info_tipo["proximo_indice"] += 1
 
-    with open(archivo_estado, "w", encoding="utf-8") as f:
+    with open(ESTADO_MENSAJES_FILE, "w", encoding="utf-8") as f:
         json.dump(estado, f, indent=4, ensure_ascii=False)
 
     return mensaje_a_enviar

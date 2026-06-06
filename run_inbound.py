@@ -1,10 +1,17 @@
 """Servidor inbound para recibir webhooks de Evolution (MESSAGES_UPSERT)."""
 
+import logging
+
 import uvicorn
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from core import config
 from flows.inbound.abandoned import check_abandoned_conversations as check_abandoned
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - [%(levelname)s] - %(message)s",
+)
 
 
 def main() -> None:

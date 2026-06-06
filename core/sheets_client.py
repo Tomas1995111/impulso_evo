@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import re
+import threading
 from datetime import datetime
 
 import gspread
@@ -18,6 +19,7 @@ SCOPES = [
 
 
 _client_cache: gspread.Client | None = None
+_client_lock = threading.Lock()
 
 
 def _client_from_service_account_json(
@@ -26,14 +28,16 @@ def _client_from_service_account_json(
     global _client_cache
     if _client_cache is not None:
         return _client_cache
-    if not credentials_path:
-        credentials_path = config.CREDENTIALS_FILE
-    if not os.path.exists(credentials_path):
-        raise FileNotFoundError(
-            f"No se encontró '{credentials_path}'. Copialo desde mensajes/credenciales.example.json"
-        )
-    creds = ServiceAccountCredentials.from_json_keyfile_name(credentials_path, SCOPES)
-    _client_cache = gspread.authorize(creds)
+    with _client_lock:
+        if _client_cache is not None:
+            return _client_cache
+        path = credentials_path or config.CREDENTIALS_FILE
+        if not os.path.exists(path):
+            raise FileNotFoundError(
+                f"No se encontró '{path}'. Copialo desde mensajes/credenciales.example.json"
+            )
+        creds = ServiceAccountCredentials.from_json_keyfile_name(path, SCOPES)
+        _client_cache = gspread.authorize(creds)
     return _client_cache
 
 

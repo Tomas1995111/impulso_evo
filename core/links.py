@@ -14,3 +14,5 @@ SUSCRIPCION_PREMIUM_30D = (
     "https://www.mercadopago.com.ar/subscriptions/checkout"
     "?preapproval_plan_id=2c9380847596cf970175ae9482893205"
 )
+
+IOL_REFERIDO = "https://micuenta.invertironline.com/registrarme?codigoAsesor=Pablo.adonay"

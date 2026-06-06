@@ -50,11 +50,39 @@ def headers() -> dict:
     return {"apikey": config.EVOLUTION_API_KEY}
 
 
+def url_send_media() -> str:
+    return (
+        f"{config.EVOLUTION_API_URL}/message/sendMedia/"
+        f"{config.EVOLUTION_INSTANCE_NAME}"
+    )
+
+
 def url_connection_state() -> str:
     return (
         f"{config.EVOLUTION_API_URL}/instance/connectionState/"
         f"{config.EVOLUTION_INSTANCE_NAME}"
     )
+
+
+@_evolution_retry(max_retries=2, base_delay=2.0)
+def send_document(jid: str, filepath: str, filename: str,
+                  mimetype: str = "application/pdf", caption: str = "") -> bool:
+    """Envía un documento (archivo) vía Evolution API. El archivo se lee y codifica en base64."""
+    import base64
+    with open(filepath, "rb") as f:
+        media_b64 = base64.b64encode(f.read()).decode("utf-8")
+    payload = {
+        "number": jid,
+        "mediatype": "document",
+        "mimetype": mimetype,
+        "media": media_b64,
+        "fileName": filename,
+        "caption": caption,
+    }
+    res = requests.post(url_send_media(), json=payload, headers=headers(), timeout=30)
+    ok = 200 <= res.status_code < 300
+    logger.info(f"send_document({jid}, {filename}) -> {res.status_code}")
+    return ok
 
 
 def wait_whatsapp_open(poll_seconds: int = 5) -> None:

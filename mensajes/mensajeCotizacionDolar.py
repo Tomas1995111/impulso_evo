@@ -5,11 +5,13 @@ from datetime import datetime
 
 import requests
 
+from core import config
+
 logger = logging.getLogger(__name__)
 
 URL = "https://dolarapi.com/v1/dolares"
 HEADERS = {"User-Agent": "Mozilla/5.0"}
-ESTADO_DOLAR_FILE = "estado_dolar.json"
+ESTADO_DOLAR_FILE = str(config.BASE_DIR / "estado_dolar.json")
 
 ORDEN_CASAS = [
     "oficial",

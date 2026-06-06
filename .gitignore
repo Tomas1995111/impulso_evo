@@ -58,4 +58,3 @@ log_bot*.log
 htmlcov/
 
 # ===== DOCKER =====
-.dockerignore

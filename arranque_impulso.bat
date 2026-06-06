@@ -11,7 +11,7 @@ if %errorlevel% neq 0 (
 )
 
 echo [AUTOBOT] Docker esta activo. Iniciando proyecto...
-cd /d "C:\Users\tarriola\Desktop\Proyectos\impulso_evo"
+cd /d "%~dp0"
 docker compose up -d --build
 
 echo [AUTOBOT] Proyecto impulso_evo levantado con exito.

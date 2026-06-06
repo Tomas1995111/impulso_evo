@@ -5,7 +5,7 @@ import re
 
 from core import evolution_client
 from core.alerts import generate_ticker_alert
-from core.links import SUSCRIPCION_PREMIUM, SUSCRIPCION_PREMIUM_7D, SUSCRIPCION_PREMIUM_30D
+from core.links import IOL_REFERIDO, SUSCRIPCION_PREMIUM, SUSCRIPCION_PREMIUM_7D, SUSCRIPCION_PREMIUM_30D
 from core.precio import generar_cotizacion_precio
 from core.sheets_client import search_leads
 
@@ -23,7 +23,8 @@ COMANDOS_AYUDA = (
     "• `/ayuda` — muestra esta ayuda\n"
     "• `/links` — links útiles de Impulso Merval\n"
     "• `/perfil NOMBRE o TELÉFONO` — busca y muestra perfil de un cliente\n"
-    "• `/precio TICKER` — cotización rápida de una acción (precio, variación, máx/mín)"
+    "• `/precio TICKER` — cotización rápida de una acción (precio, variación, máx/mín)\n"
+    "• `/designarasesor` — link de referido IOL y ruta del documento de vinculación AFI"
 )
 
 
@@ -54,6 +55,10 @@ def handle_command(remote_jid: str, text: str) -> bool:
     m = re.match(r"^/alerta\s+(.+)$", text, re.IGNORECASE | re.DOTALL)
     if m:
         _cmd_alerta(remote_jid, m.group(1))
+        return True
+
+    if cmd in ("/designarasesor",):
+        _cmd_designar_asesor(remote_jid)
         return True
 
     evolution_client.send_text(remote_jid, f"❌ Comando no reconocido: {text}")
@@ -129,6 +134,20 @@ def _cmd_perfil(remote_jid: str, query: str) -> None:
         )
 
     evolution_client.send_text(remote_jid, "\n\n─────────────\n\n".join(partes))
+
+
+def _cmd_designar_asesor(remote_jid: str) -> None:
+    caption = (
+        "👤 *IOL Referido*\n"
+        f"{IOL_REFERIDO}"
+    )
+    evolution_client.send_document(
+        jid=remote_jid,
+        filepath="documentos/Modelo vinculación AFI.docx",
+        filename="Modelo vinculación AFI.docx",
+        mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        caption=caption,
+    )
 
 
 def _cmd_alerta(remote_jid: str, args: str) -> None:

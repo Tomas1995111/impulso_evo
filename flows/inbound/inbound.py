@@ -149,12 +149,18 @@ async def messages_upsert(request: Request) -> dict:
 
     # Ignorar mensajes enviados por el bot o mensajes de grupos (queremos solo DM)
     if from_me or not remote_jid or _is_group_jid(remote_jid):
+        logger.info(
+            "Webhook ignorado: from_me=%s, remote_jid=%s, is_group=%s",
+            from_me, remote_jid, _is_group_jid(remote_jid) if remote_jid else None,
+        )
         return {"ignored": True}
 
     phone = _phone_from_remote_jid(remote_jid)
     if not phone:
+        logger.warning("No se pudo extraer teléfono de remote_jid=%s", remote_jid)
         return {"ignored": True}
 
+    logger.info("Webhook recibido de %s (text=%r)", phone, text)
     text_norm = _normalize(text)
     state = store.get_state(phone)
 
@@ -164,14 +170,17 @@ async def messages_upsert(request: Request) -> dict:
         if text.startswith("/"):
             from flows.inbound.commands import handle_command
             handle_command(remote_jid, text)
+            logger.info("Comando dispatchado a %s: %s", phone, text)
             return {"ok": True, "state": "idle"}
 
         if _es_trigger(text_norm):
             try:
                 from core.sheets_client import phone_exists
                 if phone_exists(phone):
+                    logger.info("Trigger detectado pero %s ya registrado, ignorando", phone)
                     return {"ok": True, "state": "idle"}
             except Exception:
+                logger.exception("Error consultando phone_exists para %s", phone)
                 pass
             origen = _origin_from_text(text_norm)
             store.start(phone=phone, origen=origen)

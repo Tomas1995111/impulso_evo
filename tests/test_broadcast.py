@@ -108,24 +108,32 @@ class TestMensajesProgramados:
 class TestObtenerSiguienteMensajeDinamico:
     @patch("random.shuffle", side_effect=lambda x: x)
     def test_avanza_indice(self, mock_shuffle, monkeypatch, tmp_path):
+        from flows.broadcast import broadcast
+
         contenido_dir = tmp_path / "contenido"
         contenido_dir.mkdir()
         (contenido_dir / "miercoles.json").write_text(
             json.dumps(["msg1", "msg2", "msg3"]), encoding="utf-8"
         )
-        monkeypatch.chdir(tmp_path)
+        estado_file = tmp_path / "estado_mensajes.json"
+        monkeypatch.setattr(broadcast, "CONTENIDO_DIR", contenido_dir)
+        monkeypatch.setattr(broadcast, "ESTADO_MENSAJES_FILE", estado_file)
 
         assert obtener_siguiente_mensaje_dinamico("miercoles") == "msg1"
         assert obtener_siguiente_mensaje_dinamico("miercoles") == "msg2"
         assert obtener_siguiente_mensaje_dinamico("miercoles") == "msg3"
 
     def test_mezcla_cuando_se_terminan(self, monkeypatch, tmp_path):
+        from flows.broadcast import broadcast
+
         contenido_dir = tmp_path / "contenido"
         contenido_dir.mkdir()
         (contenido_dir / "miercoles.json").write_text(
             json.dumps(["unico"]), encoding="utf-8"
         )
-        monkeypatch.chdir(tmp_path)
+        estado_file = tmp_path / "estado_mensajes.json"
+        monkeypatch.setattr(broadcast, "CONTENIDO_DIR", contenido_dir)
+        monkeypatch.setattr(broadcast, "ESTADO_MENSAJES_FILE", estado_file)
 
         primero = obtener_siguiente_mensaje_dinamico("miercoles")
         assert primero == "unico"
@@ -134,16 +142,20 @@ class TestObtenerSiguienteMensajeDinamico:
         assert segundo == "unico"
 
     def test_persiste_estado(self, monkeypatch, tmp_path):
+        from flows.broadcast import broadcast
+
         contenido_dir = tmp_path / "contenido"
         contenido_dir.mkdir()
         (contenido_dir / "miercoles.json").write_text(
             json.dumps(["msg_a", "msg_b"]), encoding="utf-8"
         )
-        monkeypatch.chdir(tmp_path)
+        estado_file = tmp_path / "estado_mensajes.json"
+        monkeypatch.setattr(broadcast, "CONTENIDO_DIR", contenido_dir)
+        monkeypatch.setattr(broadcast, "ESTADO_MENSAJES_FILE", estado_file)
 
         obtener_siguiente_mensaje_dinamico("miercoles")
 
-        with open("estado_mensajes.json", encoding="utf-8") as f:
+        with open(estado_file, encoding="utf-8") as f:
             estado = json.load(f)
         assert estado["miercoles"]["proximo_indice"] == 1
 

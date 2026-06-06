@@ -12,7 +12,7 @@ services:
       CONFIG_SESSION_PHONE_VERSION: "2.3000.1039597030"
       DATABASE_ENABLED: "true"
       DATABASE_PROVIDER: postgresql
-      DATABASE_CONNECTION_URI: "postgresql://root:password@postgres:5432/evolution"
+      DATABASE_CONNECTION_URI: "postgresql://${POSTGRES_USER:-root}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-evolution}"
       REDIS_ENABLED: "true"
       REDIS_URI: "redis://redis:6379"
       CACHE_REDIS_ENABLED: "true"
@@ -41,9 +41,9 @@ services:
     container_name: postgres_evo
     restart: always
     environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: evolution
+      POSTGRES_USER: ${POSTGRES_USER:-root}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-evolution}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -77,6 +77,7 @@ services:
       evolution_api:
         condition: service_healthy
     volumes:
+      - ./mensajes/credenciales.json:/app/mensajes/credenciales.json:ro
       - ./estado_mensajes.json:/app/estado_mensajes.json
       - ./estado_dolar.json:/app/estado_dolar.json
       - ./contenido:/app/contenido
@@ -99,7 +100,6 @@ services:
         condition: service_healthy
     volumes:
       - ./mensajes/credenciales.json:/app/mensajes/credenciales.json:ro
-      - ./flows/crm:/app/flows/crm
 
   bot_crm:
     build: .

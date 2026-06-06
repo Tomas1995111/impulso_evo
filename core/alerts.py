@@ -2,7 +2,6 @@
 import datetime
 import logging
 import math
-import os
 import random
 import time
 
@@ -12,8 +11,6 @@ from core import config
 from core import sheets_client
 
 logger = logging.getLogger(__name__)
-
-SHEET_ID = os.getenv("SHEET_ID", config.SHEET_ID)
 
 TICKERS_US = [
     'NOW', 'SHW', 'COST', 'AZO', 'SNPS', 'META', 'LMT', 'CAT', 'TMO', 'UNH',
@@ -159,7 +156,7 @@ def generate_ticker_alert(ticker: str, sheet_id: str | None = None) -> str:
     mensaje = build_alert_text(data, levels)
 
     fecha = datetime.date.today().strftime("%Y-%m-%d")
-    sid = sheet_id or SHEET_ID
+    sid = sheet_id or config.SHEET_ID
     try:
         sheets_client.append_alert_row(fecha, ticker, data["precio_actual"], levels["SL"], sid)
     except Exception:
@@ -181,7 +178,7 @@ def search_alert_condition(tickers: list[str], sheet_id: str | None = None) -> s
                 mensaje = build_alert_text(data, levels)
 
                 fecha = datetime.date.today().strftime("%Y-%m-%d")
-                sid = sheet_id or SHEET_ID
+                sid = sheet_id or config.SHEET_ID
                 try:
                     sheets_client.append_alert_row(fecha, ticker, data["precio_actual"], levels["SL"], sid)
                 except Exception:
