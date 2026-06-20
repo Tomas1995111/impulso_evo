@@ -40,6 +40,9 @@ LEADS_SHEET_ID = os.getenv(
 LEADS_SHEET_TAB = os.getenv("LEADS_SHEET_TAB", "Maestro")
 TRIAL_GROUP_JID = os.getenv("TRIAL_GROUP_JID", FREE or "")
 
+# Alpha Vantage (calendario de balances)
+ALPHA_VANTAGE_API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY", "UA4MTIIYCGNESIPL")
+
 # Redis
 REDIS_HOST = os.getenv("REDIS_HOST", "redis")
 REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))

@@ -70,6 +70,13 @@ class TestMensajesProgramados:
             if msg["mensaje"] in MENSAJES_ESPECIALES:
                 assert True
 
+    def test_balances_en_mensajes_semana(self):
+        lunes = [m for m in mensajes_semana if m["mensaje"] == "balances"]
+        assert len(lunes) == 1
+        msg = lunes[0]
+        assert "mon" in msg["dias"]
+        assert msg["hora"] == "09:00"
+
     def test_mensajes_fecha_formato_valido(self):
         for msg in mensajes_fecha:
             dt = datetime.strptime(msg["fecha"], "%d/%m/%Y %H:%M")

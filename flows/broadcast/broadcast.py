@@ -13,6 +13,7 @@ from core import config
 from core import evolution_client
 from core.links import SUSCRIPCION_PREMIUM_30D
 from core.alerts import search_arg_alert, search_us_alert
+from mensajes.mensajeBalances import generar_mensaje_balances
 from mensajes.mensajeCotizacionDolar import generar_cotizacion_dolar
 from mensajes.mensajeIndices import generar_mensaje_indices
 from mensajes.mensajeResumen import generar_mensaje_resumen
@@ -100,6 +101,7 @@ MENSAJES_ESPECIALES = {
     "cotizacion_dolar": generar_cotizacion_dolar,
     "resumen_indices": generar_mensaje_indices,
     "noticia_mercado": generar_mensaje_resumen,
+    "balances": generar_mensaje_balances,
     "alerta_bursatil": search_us_alert,
     "alerta_bursatil_arg": search_arg_alert,
     "dinamico_miercoles": lambda: obtener_siguiente_mensaje_dinamico("miercoles"),
@@ -130,6 +132,7 @@ def resolver_mensaje(texto, test_mode: bool = False, test_url: str = None):
 
 # ── Mensajes programados
 mensajes_semana = [
+    {"dias": ["mon"], "hora": "09:00", "mensaje": "balances", "grupo": [config.PREMIUM]},
     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "09:30", "mensaje": "saludo_diario", "grupo": [config.PREMIUM]},
     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "09:30", "mensaje": "resumen_indices", "grupo": [config.PREMIUM]},
     {"dias": ["mon", "tue", "wed", "thu", "fri"], "hora": "09:30", "mensaje": "noticia_mercado", "grupo": [config.PREMIUM]},

@@ -22,6 +22,7 @@ os.environ["LEADS_SHEET_TAB"] = "Maestro"
 os.environ["TRIAL_GROUP_JID"] = "120363000000000004@g.us"
 os.environ["INBOUND_WEBHOOK_SECRET"] = ""
 os.environ["GEMINI_API_KEY"] = "test-gemini-key"
+os.environ["ALPHA_VANTAGE_API_KEY"] = "test-alpha-key"
 
 
 @pytest.fixture

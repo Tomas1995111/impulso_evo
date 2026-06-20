@@ -8,6 +8,7 @@ from core.alerts import generate_ticker_alert
 from core.links import IOL_REFERIDO, SUSCRIPCION_PREMIUM, SUSCRIPCION_PREMIUM_7D, SUSCRIPCION_PREMIUM_30D
 from core.precio import generar_cotizacion_precio
 from core.sheets_client import search_leads
+from mensajes.mensajeBalances import generar_mensaje_balances
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,7 @@ LINKS: dict[str, str] = {
 COMANDOS_AYUDA = (
     "🤖 *Comandos disponibles*\n\n"
     "• `/alerta TICKER1 TICKER2...` — alerta bursátil para uno o más tickers (US o Argentina)\n"
+    "• `/balances` — calendario de balances de la semana (empresas clave ARG y USA)\n"
     "• `/ayuda` — muestra esta ayuda\n"
     "• `/links` — links útiles de Impulso Merval\n"
     "• `/perfil NOMBRE o TELÉFONO` — busca y muestra perfil de un cliente\n"
@@ -40,6 +42,10 @@ def handle_command(remote_jid: str, text: str) -> bool:
 
     if cmd in ("/ayuda", "/help"):
         evolution_client.send_text(remote_jid, COMANDOS_AYUDA)
+        return True
+
+    if cmd in ("/balances",):
+        _cmd_balances(remote_jid)
         return True
 
     if cmd.startswith("/perfil"):
@@ -70,6 +76,17 @@ def _cmd_links(remote_jid: str) -> None:
     for name, url in LINKS.items():
         lines.append(f"• *{name}*: {url}")
     evolution_client.send_text(remote_jid, "\n".join(lines))
+
+
+def _cmd_balances(remote_jid: str) -> None:
+    try:
+        mensaje = generar_mensaje_balances()
+    except Exception as e:
+        mensaje = f"❌ Error al obtener balances: {e}"
+        logger.exception("Error al generar mensaje de balances")
+    if not mensaje:
+        mensaje = "❌ No se pudieron obtener los balances en este momento."
+    evolution_client.send_text(remote_jid, mensaje)
 
 
 def _cmd_precio(remote_jid: str, args: str) -> None:
