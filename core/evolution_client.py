@@ -162,7 +162,7 @@ def add_participant_to_group(group_jid: str, participant_phone: str) -> bool:
     """Agrega un participante al grupo usando Evolution API.
 
     group_jid: JID del grupo (....@g.us)
-    participant_phone: número en formato solo dígitos (ej: 54911...)
+    participant_phone: número en solo dígitos (ej: 54911...) o JID completo (ej: 54911...@s.whatsapp.net). Evolution API acepta ambos formatos.
     """
     if not group_jid or not participant_phone:
         return False

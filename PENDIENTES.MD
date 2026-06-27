@@ -1,58 +1,106 @@
 # Pendientes Impulso Evo
 
-> Lista priorizada de cambios identificados durante la revisión del proyecto.
-> Dificultad: 1 (trivial) → 10 (rediseño).
-> Última actualización: #19 (logging) y #13 (thread-safety) completados.
+> Lista unificada de pendientes: bugs, seguridad, refactorización, negocio, testing e innovación.
+> Dificultad: 1 (trivial) → 10 (rediseño completo).
+> Última actualización: #15 (cache phone_exists) completado.
 
 ---
 
-## Pendientes (ordenados del más al menos importante)
+## FASE 1 — Bugs y Seguridad (urgente)
 
-| # | Item | Dificultad | Archivos | Por qué importa |
-|---|------|:----------:|----------|-----------------|
-| 15 | **Rate-limit en webhook `/messages-upsert`** | 2/10 | `flows/inbound/inbound.py` | Sin rate-limit, un usuario (o bot malicioso) enviando 100 mensajes en 1 segundo golpea Google Sheets 100 veces y puede causar 429s. Mitigación: contador Redis con ventana de 1 minuto. |
-| 14 | **Cache de `phone_exists()` en Redis** | 4/10 | `core/sheets_client.py` | Cada trigger de inbound hace 1 llamada a `phone_exists()` → 1 hit a Google Sheets. Con cache Redis (TTL 5 min) yace el 90% de las llamadas, baja la latencia y protege el quota de la API. |
-| 11 | **`USER` no-root en Dockerfile** | 3/10 | `Dockerfile` | Hoy el container corre como root. Si alguien explota una vulnerabilidad de `requests` o `uvicorn`, obtiene root en el host. Mitigación: crear `appuser`, `chown`, `USER appuser`. |
-| 12 | **Healthchecks para servicios Python** | 2/10 | `docker-compose.yml`, `flows/inbound/inbound.py` | Sin healthcheck, `docker ps` muestra "Up" aunque el proceso esté en deadlock. Solución: endpoint `/health` en FastAPI que retorna 200 si Redis+Evolution responden, y `test: ["CMD", "curl", ...]` en compose. |
-| 16 | **Mover `mensajes_fecha` a JSON externo** | 3/10 | `flows/broadcast/broadcast.py`, `contenido/` | Hoy los mensajes por fecha están hardcodeados en un dict Python (línea ~86 `MENSAJES_ESPECIALES` o un dict similar). Moverlos a `contenido/mensajes_fecha.json` permite editarlos sin deploy. |
-| 10 | **Pin de versión Evolution API** (`:latest` → tag fijo) | 1/10 | `docker-compose.yml` | Con `:latest`, un día Evolution API publica un breaking change y los 3 bots rompen a la vez. Decisión previa: dejar `:latest` por ahora. Riesgo aceptado. |
-| 17 | **Renombrar `BACKUP` → `GRUPO_BACKUP`** en config | 1/10 | `core/config.py`, callers | Inconsistencia de naming. Hoy `BACKUP = os.getenv("GRUPO_BACKUP")` en `core/config.py:15`. Cambio mecánico: rename + update de los call sites (buscar con `grep -rn "config.BACKUP"`). |
-
-### Detalle de los top-2 (los más críticos)
-
-- **#15 — Rate-limit en `/messages-upsert`**
-  Un usuario puede mandar N mensajes en poco tiempo (legítimo o no). Cada uno triggerea `phone_exists()` → 1 hit a Google Sheets. Si la frecuencia es alta, se pasa el quota y la API responde 429, lo que el `try/except` actual en `inbound.py:174-175` se traga silenciosamente (ahora loggea con #19, pero el usuario no recibe respuesta). Mitigación:
-  1. Middleware FastAPI que cuente hits por `remote_jid` en Redis con `INCR` + `EXPIRE 60`.
-  2. Si supera N mensajes por minuto → return 429 inmediato sin tocar Sheets.
-  3. Aplicar antes de parsear el payload (ahorra CPU en validación).
-
-- **#14 — Cache de `phone_exists()`**
-  `phone_exists()` (línea 140) hace `get_all_values()` sobre toda la hoja Maestro, que puede tener cientos de filas. Cada trigger inbound = 1 llamada completa. Si tenés 100 triggers/hora son 100 fetches completos. Cache Redis con TTL 5 min reduce el 90% a costo de 1 GET por key. La invalidación es trivial: cuando `append_lead_row()` escribe, hace `redis.delete(f"phone_exists:{phone}")` para ese teléfono.
+| # | Item | Dif | Archivos | Descripción |
+|---|------|:---:|----------|-------------|
+| 1 | Rate-limit en webhook `/messages-upsert` | 2 | `flows/inbound/inbound.py` | Middleware FastAPI con contador Redis, ventana 1 min. Sin esto, spameo → quota Sheets agotada |
+| 2 | USER non-root en Dockerfile | 3 | `Dockerfile` | Container corre como root. Crear `appuser`, `chown`, `USER appuser` |
 
 ---
 
-## Completados (histórico)
+## FASE 2 — Refactorización (calidad de código)
+
+| # | Item | Dif | Archivos | Descripción |
+|---|------|:---:|----------|-------------|
+| 3 | Unificar inicialización de Google Sheets | 3 | `flows/crm/crm_worker.py`, `core/sheets_client.py` | CRM usa `gspread.service_account()` directamente, sheets_client tiene su propio pool. Unificar en un solo punto |
+| 4 | Mover mensajes del CRM a JSON externo | 2 | `flows/crm/crm_worker.py`, `contenido/` | Los 7 mensajes hardcodeados en `get_message()` → `contenido/crm_messages.json` para editar sin deploy |
+| 5 | Mover `mensajes_fecha` a JSON externo | 3 | `flows/broadcast/broadcast.py`, `contenido/` | Feriados hardcodeados en Python → `contenido/mensajes_fecha.json` |
+| 6 | Centralizar timezone | 1 | Nuevo `core/` o actualizar `config.py` | `ZoneInfo` como string en inbound, como `ZoneInfo` en otro lado, hardcodeada en broadcast/CRM. Crear `config.TIMEZONE_OBJ` |
+| 7 | Renombrar `BACKUP` → `GRUPO_BACKUP` | 1 | `core/config.py`, callers | Inconsistencia de naming. Rename mecánico con grep |
+| 8 | Reemplazar `print()` por `logging` | 1 | `core/evolution_client.py` | `send_text` y `send_text_to_destinations` usan `print()` en vez de `logging` |
+| 9 | Mover listados de tickers a archivo separado | 2 | `core/alerts.py` → `core/tickers.py` | 200+ tickers hardcodeados en `alerts.py`. Mejor separar |
+| 10 | Agregar type hints a funciones públicas | 2 | Todos los `core/` y `flows/` | Proyecto usa `from __future__ import annotations` en algunos archivos pero no en todos |
+| 11 | Crear `core/exceptions.py` | 2 | `core/exceptions.py` | Excepciones custom (`AlertError`, `SheetError`, `EvolutionError`) en vez de `Exception` genérica |
+| 12 | Healthchecks para servicios Python | 2 | `docker-compose.yml`, `flows/inbound/inbound.py` | `bot` y `bot_crm` no tienen healthcheck. Agregar test de Redis+Evolution en el endpoint `/health` |
+| 13 | Pin de versión Evolution API | 1 | `docker-compose.yml` | `:latest` → tag fijo. Riesgo de breaking change silencioso |
+| 14 | Deploy limits (memoria/CPU) | 2 | `docker-compose.yml` | Agregar `deploy: resources: limits` a cada servicio Python |
+| 15 | Logging estructurado | 3 | Todos los servicios | `structlog` o JSON logging para debugging en producción |
+
+---
+
+## FASE 3 — Negocio / CX / CRM
+
+| # | Item | Dif | Archivos | Descripción |
+|---|------|:---:|----------|-------------|
+| 16 | Validación de email en inbound | 1 | `flows/inbound/inbound.py` | Regex simple (`@` y `.`) antes de guardar en Sheets. Hoy acepta cualquier string |
+| 17 | Subir TTL de Redis a 24h | 1 | `core/config.py` | El TTL de 6h para conversaciones es agresivo. Un usuario que se distrae pierde el estado |
+| 18 | Check-in CRM día 1 | 2 | `flows/crm/crm_worker.py`, `contenido/` | Nuevo mensaje post-registro: "¿Te gustó el primer resumen? Mañana tenés otro." Actualmente el CRM inicia día 3 |
+| 19 | Auto-detectar bajas por inactividad | 3 | `flows/crm/crm_worker.py` | Si el usuario no responde en 14 días → transición a Baja automática. Hoy es 100% manual |
+| 20 | Encuesta automática de baja | 3 | `flows/crm/crm_worker.py` | Al dar de baja, enviar: "¿Por qué? 1) Precio 2) Tiempo 3) Contenido 4) Otro" y registrar motivo |
+| 21 | Dashboard de métricas para admin | 4 | Nuevo endpoint o script | Endpoint `/dashboard` con: leads hoy, trials activos, conversiones Trial→Pago, bajas del mes |
+| 22 | Alertas de churn al admin | 3 | `flows/crm/crm_worker.py` | Notificar al admin cuando un usuario lleva X días sin interacción en el grupo |
+| 23 | Reducir frecuencia de mensajes | 2 | `flows/broadcast/broadcast.py` | 6-7 mensajes/día puede causar fatiga. Evaluar consolidar a 3-4 o ofrecer "modos" (conservador/agresivo) |
+| 24 | Segmentación por perfil | 4 | Inbound + CRM + Broadcast | Preguntar en onboarding qué le interesa (Acciones/CEDEARs/Cripto/Renta fija) y filtrar contenido |
+
+---
+
+## FASE 4 — Testing y DevOps
+
+| # | Item | Dif | Archivos | Descripción |
+|---|------|:---:|----------|-------------|
+| 25 | Tests de integración | 4 | `tests/` | Al menos 5 tests que mockeen el pipeline completo (inbound → Sheets → Redis → Evolution) |
+| 26 | CI/CD con GitHub Actions | 4 | `.github/workflows/` | Pipeline: lint → test → build. Deploy manual |
+| 27 | Cobertura de código | 2 | `pytest.ini`, CI | Agregar `pytest-cov` al pipeline, meta 70%+ |
+| 28 | Exportar leads a CSV | 2 | `core/sheets_client.py` | Función `exportar_csv()` para reporting manual sin abrir Sheets |
+
+---
+
+## FASE 5 — Innovación
+
+| # | Item | Dif | Archivos | Descripción |
+|---|------|:---:|----------|-------------|
+| 29 | Bot de consultas inteligente | 6 | `flows/inbound/commands.py`, Gemini | Comando `/opinar TICKER` que consulte Gemini con datos de yfinance para dar análisis en tiempo real |
+| 30 | Alertas push personalizadas (watchlist) | 6 | Nuevo Sheet + cron job | El usuario configura tickers de interés (`/seguir AAPL GGAL`), recibe alerta privada si movimiento >2% |
+| 31 | Simulador de cartera | 7 | Nuevo Sheet + cron job | `/cartera AAPL:30%,GGAL:20%` → análisis semanal de rentabilidad ficticia con yfinance |
+
+---
+
+## Completados (histórico — no modificar)
 
 | # | Item | Dificultad | Archivos |
 |---|------|:----------:|----------|
-| 1 | `.dockerignore` (nuevo) | 1/10 | `.dockerignore` |
-| 2 | Volumen `credenciales.json` en servicio `bot` | 1/10 | `docker-compose.yml` |
-| 3 | Mover `POSTGRES_PASSWORD` a `.env` | 2/10 | `docker-compose.yml`, `.env.example`, `.env` |
-| 4 | `logging.basicConfig()` en `run_broadcast.py` y `run_inbound.py` | 1/10 | `run_broadcast.py`, `run_inbound.py` |
-| 5 | Sacar volumen huérfano `./flows/crm` de `bot_inbound` | 1/10 | `docker-compose.yml` |
-| 6 | Rutas absolutas en `broadcast.py` y `mensajeCotizacionDolar.py` | 3/10 | `flows/broadcast/broadcast.py`, `mensajes/mensajeCotizacionDolar.py` |
-| 7 | Actualizar fixtures de `tests/test_broadcast.py` | 4/10 | `tests/test_broadcast.py` |
-| 8 | Limpiar `SHEET_ID` duplicado en `core/alerts.py:16` | 1/10 | `core/alerts.py` |
-| 9 | `arranque_impulso.bat` con `%~dp0` | 1/10 | `arranque_impulso.bat` |
-| 18 | Diagnosticar inbound "no dispara" (Fase 1) | 3/10 | (sin cambios) — el código funcionaba bien, el usuario ya estaba en `LEADS_SHEET_ID` y `phone_exists()` retornaba `True` como debe. |
-| 19 | Mejorar logging del inbound (5 silent-exit points) | 2/10 | `flows/inbound/inbound.py` |
-| 13 | Thread-safety en `_client_cache` (Lock + DCL) | 4/10 | `core/sheets_client.py` |
+| 1 | `.dockerignore` (nuevo) | 1 | `.dockerignore` |
+| 2 | Volumen `credenciales.json` en servicio `bot` | 1 | `docker-compose.yml` |
+| 3 | Mover `POSTGRES_PASSWORD` a `.env` | 2 | `docker-compose.yml`, `.env.example`, `.env` |
+| 4 | `logging.basicConfig()` en `run_broadcast.py` y `run_inbound.py` | 1 | `run_broadcast.py`, `run_inbound.py` |
+| 5 | Sacar volumen huérfano `./flows/crm` de `bot_inbound` | 1 | `docker-compose.yml` |
+| 6 | Rutas absolutas en `broadcast.py` y `mensajeCotizacionDolar.py` | 3 | `flows/broadcast/broadcast.py`, `mensajes/mensajeCotizacionDolar.py` |
+| 7 | Actualizar fixtures de `tests/test_broadcast.py` | 4 | `tests/test_broadcast.py` |
+| 8 | Limpiar `SHEET_ID` duplicado en `core/alerts.py:16` | 1 | `core/alerts.py` |
+| 9 | `arranque_impulso.bat` con `%~dp0` | 1 | `arranque_impulso.bat` |
+| 10 | Fix `TICKERS_ARG` duplicado (`TECO2.BA`) | 1 | `core/alerts.py` |
+| 11 | Sacar `ALPHA_VANTAGE_API_KEY` hardcodeada | 1 | `core/config.py:44` |
+| 12 | Renombrar `SHEET_ID` → `ALERTAS_SHEET_ID` + quitar defaults hardcodeados | 2 | `core/config.py`, `core/alerts.py`, `core/sheets_client.py`, `tests/conftest.py`, `.env`, `.env.example`, `README.md` |
+| 13 | Fix formatos fecha en `get_days_diff()` (sacar `%G:%M` y `%k:%M`) | 1 | `flows/crm/crm_worker.py` |
+| 14 | Actualizar docstring `add_participant_to_group` (acepta dígitos y JID) | 1 | `core/evolution_client.py` |
+| 15 | Cache de `phone_exists()` en Redis (TTL 5min) | 2 | `core/sheets_client.py` |
+| 16 | Thread-safety en `_client_cache` (Lock + DCL) | 4 | `core/sheets_client.py` |
+| 17 | Diagnosticar inbound "no dispara" (Fase 1) | 3 | (sin cambios) |
+| 18 | Mejorar logging del inbound (5 silent-exit points) | 2 | `flows/inbound/inbound.py` |
 
 ---
 
 ## Resumen ejecutivo
 
-- **Pendientes activos**: 7 (#15, #14, #11, #12, #16, #10, #17)
-- **Items completados**: 12 (1-9 del plan original + #18, #19, #13 del backlog)
-- **Dificultad promedio pendientes**: 2.3/10
-- **Próximo sugerido**: #15 (rate-limit) — bajo costo, evita incidentes de quota en Sheets
+- **Total pendientes activos:** 31
+- **Por fase:** Seguridad 2 | Refactor 13 | Negocio 9 | Testing 4 | Innovación 3
+- **Dificultad promedio:** 2.5/10
+- **Items más urgentes:** #1-2 (bugs + seguridad)
+- **Mayor impacto de negocio:** #18 (check-in día 1), #19 (auto-bajas), #23 (frecuencia mensajes)

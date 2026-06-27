@@ -24,7 +24,20 @@ TICKERS_US = [
     'MA', 'ORCL', 'XOM', 'SAP', 'BAC', 'ABBV', 'SPY', 'QQQ', 'DIA', 'IWM',
     'VTI', 'VEA', 'VWO', 'TLT', 'GLD', 'XLF', 'XLE', 'XLV', 'XLK', 'XLY',
     'XLU', 'INTC', 'PEP', 'UPS', 'ADBE', 'MDT', 'PFE', 'BABA', 'SBUX', 'CSX', 'PYPL',
-     'WFC',  'NOW',  'DESP',  'BIOX',
+    'WFC', 'DESP', 'BIOX',
+    'SPCX', 'AMAT', 'TCEHY', 'LRCX', 'ARM', 'MS', 'HSBC', 'SNDK', 'NVS', 'AZN',
+    'GEV', 'PM', 'RY', 'RTX', 'DELL', 'PANW', 'C', 'MRVL', 'MUFG', 'SHEL',
+    'NVO', 'STX', 'WDC', 'BHP', 'TM', 'APH', 'ANET', 'CRWD', 'ABT', 'APP',
+    'WELL', 'SCHW', 'T', 'IBKR', 'UBER', 'SHOP', 'DHR', 'CVS', 'PLD', 'UL',
+    'CB', 'PGR', 'VRTX', 'ENB', 'BMY', 'SONY', 'FTNT', 'SO', 'PDD', 'HWM',
+    'PBR', 'GSK', 'CM', 'BP', 'SPOT', 'BK', 'BCS', 'ITUB', 'ING', 'HOOD',
+    'RCL', 'ABNB', 'SNOW', 'NET', 'CME', 'DASH', 'ECL', 'MDLZ', 'MCO', 'HLT',
+    'NOK', 'CVNA', 'NOC', 'GM', 'XIACF', 'SLB', 'WBD', 'RACE', 'TGT', 'B',
+    'DAL', 'F', 'MET', 'CTVA', 'NUE', 'RKLB', 'EA', 'ABEV', 'EBAY', 'VIK',
+    'UAL', 'GRMN', 'CCL', 'CMG', 'MSCI', 'IRM', 'COIN', 'BBD', 'TRI', 'KMB',
+    'BIDU', 'HMC', 'JD', 'RBLX', 'RDDT', 'VOD', 'BIIB', 'LVS', 'TWLO', 'KHC',
+    'WSM', 'MRNA', 'PHG', 'DG', 'FSLR', 'LUV', 'TCOM', 'ZM', 'SOFI', 'ULTA',
+    'TSN', 'ROKU', 'FOX', 'LTM'
 ]
 
 TICKERS_ARG = [
@@ -157,7 +170,7 @@ def generate_ticker_alert(ticker: str, sheet_id: str | None = None) -> str:
     mensaje = build_alert_text(data, levels)
 
     fecha = datetime.date.today().strftime("%Y-%m-%d")
-    sid = sheet_id or config.SHEET_ID
+    sid = sheet_id or config.ALERTAS_SHEET_ID
     try:
         sheets_client.append_alert_row(fecha, ticker, data["precio_actual"], levels["SL"], sid)
     except Exception:
@@ -179,7 +192,7 @@ def search_alert_condition(tickers: list[str], sheet_id: str | None = None) -> s
                 mensaje = build_alert_text(data, levels)
 
                 fecha = datetime.date.today().strftime("%Y-%m-%d")
-                sid = sheet_id or config.SHEET_ID
+                sid = sheet_id or config.ALERTAS_SHEET_ID
                 try:
                     sheets_client.append_alert_row(fecha, ticker, data["precio_actual"], levels["SL"], sid)
                 except Exception:

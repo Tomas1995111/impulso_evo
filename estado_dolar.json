@@ -1,12 +1,12 @@
 {
-  "fecha": "20/06/2026",
+  "fecha": "26/06/2026",
   "valores": {
-    "oficial": 1481.94,
-    "tarjeta": 1926.52,
-    "mayorista": 1461.0,
-    "bolsa": 1478.2,
-    "contadoconliqui": 1508.9,
-    "blue": 1480.0,
+    "oficial": 1495.0,
+    "tarjeta": 1943.5,
+    "mayorista": 1477.0,
+    "bolsa": 1498.4,
+    "contadoconliqui": 1539.0,
+    "blue": 1520.0,
     "cripto": 1511.7
   }
 }

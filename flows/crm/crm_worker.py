@@ -30,8 +30,6 @@ def get_days_diff(date_str: str) -> int:
     formats = [
         "%d/%m/%Y %H:%M:%S",
         "%d/%m/%Y %H:%M",
-        "%d/%m/%Y %k:%M",
-        "%d/%m/%Y %G:%M",
         "%d/%m/%Y",
     ]
     clean_date = date_str.strip()

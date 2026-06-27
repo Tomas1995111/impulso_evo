@@ -94,6 +94,14 @@ def append_lead_row(
     ]
     ws.append_row(row, value_input_option="USER_ENTERED")
 
+    # Invalidar cache de phone_exists para este teléfono
+    r = _get_redis_client()
+    if r:
+        try:
+            r.delete(f"phone_exists:{re.sub(r'\\D+', '', telefono)}")
+        except Exception:
+            pass
+
 
 def append_alert_row(
     fecha: str,
@@ -103,17 +111,18 @@ def append_alert_row(
     sheet_id: str = "",
 ) -> None:
     """Append de una alerta bursátil a la sheet de alertas."""
-    sid = sheet_id or config.SHEET_ID
+    sid = sheet_id or config.ALERTAS_SHEET_ID
     client = _client_from_service_account_json()
     sheet = client.open_by_key(sid).sheet1
     sheet.append_row([fecha, ticker, precio, stop_loss])
 
 
-def search_leads(query: str) -> list[dict]:
+def search_leads(query: str, sheet_id: str = "") -> list[dict]:
     """Busca en el Sheet de leads por teléfono (exacto) o nombre (parcial, case-insensitive).
     Retorna lista de dicts con todas las columnas."""
+    sid = sheet_id or config.LEADS_SHEET_ID
     client = _client_from_service_account_json()
-    sh = client.open_by_key(config.LEADS_SHEET_ID)
+    sh = client.open_by_key(sid)
     ws = sh.worksheet(config.LEADS_SHEET_TAB)
     records = ws.get_all_values()
 
@@ -141,13 +150,49 @@ def search_leads(query: str) -> list[dict]:
     return results
 
 
-def phone_exists(phone: str) -> bool:
-    """Retorna True si el teléfono ya está en el Sheet de leads (columna 1)."""
-    client = _client_from_service_account_json()
-    sh = client.open_by_key(config.LEADS_SHEET_ID)
-    ws = sh.worksheet(config.LEADS_SHEET_TAB)
+def _get_redis_client():
+    """Retorna un cliente Redis o None si no está disponible."""
+    try:
+        import redis as _redis
+        return _redis.Redis(
+            host=config.REDIS_HOST, port=config.REDIS_PORT,
+            decode_responses=True, socket_connect_timeout=2,
+        )
+    except Exception:
+        return None
+
+
+def phone_exists(phone: str, sheet_id: str = "") -> bool:
+    """Retorna True si el teléfono ya está en el Sheet de leads (columna 1).
+    Usa cache Redis (TTL 5 min) para evitar scans repetidos de la hoja."""
+    sid = sheet_id or config.LEADS_SHEET_ID
     phone_digits = re.sub(r"\D+", "", phone)
+    cache_key = f"phone_exists:{phone_digits}"
+
+    r = _get_redis_client()
+    if r:
+        try:
+            cached = r.get(cache_key)
+            if cached is not None:
+                return cached == "1"
+        except Exception:
+            pass
+
+    client = _client_from_service_account_json()
+    sh = client.open_by_key(sid)
+    ws = sh.worksheet(config.LEADS_SHEET_TAB)
     for row in ws.get_all_values()[1:]:
         if re.sub(r"\D+", "", (row[0] or "").strip()) == phone_digits:
+            if r:
+                try:
+                    r.set(cache_key, "1", ex=300)
+                except Exception:
+                    pass
             return True
+
+    if r:
+        try:
+            r.set(cache_key, "0", ex=300)
+        except Exception:
+            pass
     return False

@@ -30,18 +30,15 @@ CREDENTIALS_FILE = str(BASE_DIR / "mensajes" / "credenciales.json")
 TIMEZONE = "America/Argentina/Buenos_Aires"
 
 # Google Sheet de alertas (core.alerts)
-SHEET_ID = os.getenv("SHEET_ID", "1Z9gfXGPdhBktLMwAIj4KpJ5SI2hDKK5lXG2Z63DaMSI")
+ALERTAS_SHEET_ID = os.getenv("ALERTAS_SHEET_ID", "")
 
 # Google Sheet de clientes / inbound (pestaña Maestro)
-LEADS_SHEET_ID = os.getenv(
-    "LEADS_SHEET_ID",
-    "1ev-UYItiGQX7tSjNGV4-OHjVwT792KnHP3Vq9ghUlmQ",
-)
+LEADS_SHEET_ID = os.getenv("LEADS_SHEET_ID", "")
 LEADS_SHEET_TAB = os.getenv("LEADS_SHEET_TAB", "Maestro")
 TRIAL_GROUP_JID = os.getenv("TRIAL_GROUP_JID", FREE or "")
 
 # Alpha Vantage (calendario de balances)
-ALPHA_VANTAGE_API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY", "UA4MTIIYCGNESIPL")
+ALPHA_VANTAGE_API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY", "")
 
 # Redis
 REDIS_HOST = os.getenv("REDIS_HOST", "redis")

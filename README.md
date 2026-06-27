@@ -126,7 +126,7 @@ Editar `.env` con tus valores reales. Las variables mínimas requeridas:
 | `EVOLUTION_API_KEY` | De la configuración de Evolution API |
 | `EVOLUTION_INSTANCE_NAME` | Nombre de la instancia en Evolution (default: `Impulso`) |
 | `LEADS_SHEET_ID` | ID de la Google Sheet de leads (de la URL: `/d/<ID>/edit`) |
-| `SHEET_ID` | ID de la Google Sheet de alertas (opcional, tiene default) |
+| `ALERTAS_SHEET_ID` | Sí | — | ID de Google Sheet de alertas |
 | `GEMINI_API_KEY` | Google AI Studio → API Key |
 | `GRUPO_DEFAULT`, `PREMIUM`, etc. | Ejecutar `scripts/grupos.py` con el bot corriendo |
 
@@ -136,7 +136,7 @@ Editar `.env` con tus valores reales. Las variables mínimas requeridas:
 
 Pegar el JSON de tu **Service Account** de Google Cloud en `mensajes/credenciales.json`.
 
-La Service Account debe tener permisos de editor en las Google Sheets que uses (`LEADS_SHEET_ID` y `SHEET_ID`). Para compartir una Sheet con la Service Account, usá el email que aparece en el JSON (`client_email`) como editor en la Sheet.
+La Service Account debe tener permisos de editor en las Google Sheets que uses (`LEADS_SHEET_ID` y `ALERTAS_SHEET_ID`). Para compartir una Sheet con la Service Account, usá el email que aparece en el JSON (`client_email`) como editor en la Sheet.
 
 ### 5. Verificar `.gitignore`
 
@@ -384,7 +384,7 @@ Ver `.env.example` para el template completo.
 | `GRUPO_REVISION` | Sí | — | JID del grupo de revisión |
 | `GRUPO_PREMIUM` | Sí | — | JID del grupo premium |
 | `GRUPO_FREE` | Sí | — | JID del grupo free/trial |
-| `SHEET_ID` | No | (default interno) | ID de Google Sheet de alertas |
+| `ALERTAS_SHEET_ID` | Sí | — | ID de Google Sheet de alertas |
 | `LEADS_SHEET_ID` | Sí | (default interno) | ID de Google Sheet de leads |
 | `LEADS_SHEET_TAB` | No | `Maestro` | Nombre de la pestaña de leads |
 | `GEMINI_API_KEY` | Sí | — | API Key de Google Gemini |
