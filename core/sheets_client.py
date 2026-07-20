@@ -98,7 +98,8 @@ def append_lead_row(
     r = _get_redis_client()
     if r:
         try:
-            r.delete(f"phone_exists:{re.sub(r'\\D+', '', telefono)}")
+            telefono_limpio = re.sub(r'\D+', '', telefono)
+            r.delete(f"phone_exists:{telefono_limpio}")
         except Exception:
             pass
 

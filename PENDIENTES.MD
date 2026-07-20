@@ -1,74 +1,74 @@
 # Pendientes Impulso Evo
 
-> Lista unificada de pendientes: bugs, seguridad, refactorización, negocio, testing e innovación.
+> Lista unificada de pendientes, ordenados por prioridad de impacto.
 > Dificultad: 1 (trivial) → 10 (rediseño completo).
-> Última actualización: #15 (cache phone_exists) completado.
+> Última actualización: reordenado por prioridad.
 
 ---
 
-## FASE 1 — Bugs y Seguridad (urgente)
+## 🔴 P0 — Crítico (producción rota o riesgo de seguridad)
 
 | # | Item | Dif | Archivos | Descripción |
 |---|------|:---:|----------|-------------|
-| 1 | Rate-limit en webhook `/messages-upsert` | 2 | `flows/inbound/inbound.py` | Middleware FastAPI con contador Redis, ventana 1 min. Sin esto, spameo → quota Sheets agotada |
-| 2 | USER non-root en Dockerfile | 3 | `Dockerfile` | Container corre como root. Crear `appuser`, `chown`, `USER appuser` |
+| 1 | Rate-limit en webhook `/messages-upsert` | 2 | `flows/inbound/inbound.py` | Sin esto, spameo → quota Google Sheets agotada. Servicio caído |
+| 2 | USER non-root en Dockerfile | 3 | `Dockerfile` | Container corre como root. Riesgo de seguridad en producción |
+| 3 | Pin de versión Evolution API | 1 | `docker-compose.yml` | `:latest` → tag fijo. Riesgo de breaking change silencioso |
+| 4 | Validación de email en inbound | 1 | `flows/inbound/inbound.py` | Regex simple (`@` y `.`) antes de guardar en Sheets. Hoy acepta cualquier string |
+| 5 | Subir TTL de Redis a 24h | 1 | `core/config.py` | TTL de 6h es agresivo. Un usuario que se distrae pierde el estado de conversación |
 
 ---
 
-## FASE 2 — Refactorización (calidad de código)
+## 🟡 P1 — Alto (experiencia de usuario o impacto de negocio directo)
 
 | # | Item | Dif | Archivos | Descripción |
 |---|------|:---:|----------|-------------|
-| 3 | Unificar inicialización de Google Sheets | 3 | `flows/crm/crm_worker.py`, `core/sheets_client.py` | CRM usa `gspread.service_account()` directamente, sheets_client tiene su propio pool. Unificar en un solo punto |
-| 4 | Mover mensajes del CRM a JSON externo | 2 | `flows/crm/crm_worker.py`, `contenido/` | Los 7 mensajes hardcodeados en `get_message()` → `contenido/crm_messages.json` para editar sin deploy |
-| 5 | Mover `mensajes_fecha` a JSON externo | 3 | `flows/broadcast/broadcast.py`, `contenido/` | Feriados hardcodeados en Python → `contenido/mensajes_fecha.json` |
-| 6 | Centralizar timezone | 1 | Nuevo `core/` o actualizar `config.py` | `ZoneInfo` como string en inbound, como `ZoneInfo` en otro lado, hardcodeada en broadcast/CRM. Crear `config.TIMEZONE_OBJ` |
-| 7 | Renombrar `BACKUP` → `GRUPO_BACKUP` | 1 | `core/config.py`, callers | Inconsistencia de naming. Rename mecánico con grep |
-| 8 | Reemplazar `print()` por `logging` | 1 | `core/evolution_client.py` | `send_text` y `send_text_to_destinations` usan `print()` en vez de `logging` |
-| 9 | Mover listados de tickers a archivo separado | 2 | `core/alerts.py` → `core/tickers.py` | 200+ tickers hardcodeados en `alerts.py`. Mejor separar |
-| 10 | Agregar type hints a funciones públicas | 2 | Todos los `core/` y `flows/` | Proyecto usa `from __future__ import annotations` en algunos archivos pero no en todos |
-| 11 | Crear `core/exceptions.py` | 2 | `core/exceptions.py` | Excepciones custom (`AlertError`, `SheetError`, `EvolutionError`) en vez de `Exception` genérica |
-| 12 | Healthchecks para servicios Python | 2 | `docker-compose.yml`, `flows/inbound/inbound.py` | `bot` y `bot_crm` no tienen healthcheck. Agregar test de Redis+Evolution en el endpoint `/health` |
-| 13 | Pin de versión Evolution API | 1 | `docker-compose.yml` | `:latest` → tag fijo. Riesgo de breaking change silencioso |
-| 14 | Deploy limits (memoria/CPU) | 2 | `docker-compose.yml` | Agregar `deploy: resources: limits` a cada servicio Python |
-| 15 | Logging estructurado | 3 | Todos los servicios | `structlog` o JSON logging para debugging en producción |
+| 6 | Check-in CRM día 1 | 2 | `flows/crm/crm_worker.py`, `contenido/` | Nuevo mensaje post-registro: "¿Te gustó el primer resumen?" Actualmente el CRM inicia en día 3 — los primeros 2 días hay silencio total |
+| 7 | Auto-detectar bajas por inactividad | 3 | `flows/crm/crm_worker.py` | Si el usuario no responde en 14 días → transición a Baja automática. Hoy es 100% manual |
+| 8 | Reducir frecuencia de mensajes | 2 | `flows/broadcast/broadcast.py` | 6-7 mensajes/día puede causar fatiga y bajas. Evaluar consolidar a 3-4 o ofrecer "modos" |
+| 9 | Healthchecks para servicios Python | 2 | `docker-compose.yml`, `flows/inbound/inbound.py` | `bot` y `bot_crm` no tienen healthcheck. Docker no reinicia si el servicio queda colgado |
+| 10 | Encuesta automática de baja | 3 | `flows/crm/crm_worker.py` | Al dar de baja, preguntar motivo y registrarlo. Sin esto no hay data para mejorar |
+| 11 | Alertas de churn al admin | 3 | `flows/crm/crm_worker.py` | Notificar al admin cuando un usuario lleva X días sin interacción |
 
 ---
 
-## FASE 3 — Negocio / CX / CRM
+## 🟢 P2 — Medio (calidad de código y mantenibilidad)
 
 | # | Item | Dif | Archivos | Descripción |
 |---|------|:---:|----------|-------------|
-| 16 | Validación de email en inbound | 1 | `flows/inbound/inbound.py` | Regex simple (`@` y `.`) antes de guardar en Sheets. Hoy acepta cualquier string |
-| 17 | Subir TTL de Redis a 24h | 1 | `core/config.py` | El TTL de 6h para conversaciones es agresivo. Un usuario que se distrae pierde el estado |
-| 18 | Check-in CRM día 1 | 2 | `flows/crm/crm_worker.py`, `contenido/` | Nuevo mensaje post-registro: "¿Te gustó el primer resumen? Mañana tenés otro." Actualmente el CRM inicia día 3 |
-| 19 | Auto-detectar bajas por inactividad | 3 | `flows/crm/crm_worker.py` | Si el usuario no responde en 14 días → transición a Baja automática. Hoy es 100% manual |
-| 20 | Encuesta automática de baja | 3 | `flows/crm/crm_worker.py` | Al dar de baja, enviar: "¿Por qué? 1) Precio 2) Tiempo 3) Contenido 4) Otro" y registrar motivo |
-| 21 | Dashboard de métricas para admin | 4 | Nuevo endpoint o script | Endpoint `/dashboard` con: leads hoy, trials activos, conversiones Trial→Pago, bajas del mes |
-| 22 | Alertas de churn al admin | 3 | `flows/crm/crm_worker.py` | Notificar al admin cuando un usuario lleva X días sin interacción en el grupo |
-| 23 | Reducir frecuencia de mensajes | 2 | `flows/broadcast/broadcast.py` | 6-7 mensajes/día puede causar fatiga. Evaluar consolidar a 3-4 o ofrecer "modos" (conservador/agresivo) |
-| 24 | Segmentación por perfil | 4 | Inbound + CRM + Broadcast | Preguntar en onboarding qué le interesa (Acciones/CEDEARs/Cripto/Renta fija) y filtrar contenido |
+| 12 | Unificar inicialización de Google Sheets | 3 | `flows/crm/crm_worker.py`, `core/sheets_client.py` | CRM usa `gspread.service_account()` directamente, sheets_client tiene su propio pool. Duplicación |
+| 13 | Reemplazar `print()` por `logging` | 1 | `core/evolution_client.py` | `send_text` y `send_text_to_destinations` usan `print()` en vez de `logging` |
+| 14 | Centralizar timezone | 1 | `config.py` | `ZoneInfo` como string en inbound, `ZoneInfo` en otro lado, hardcodeada en broadcast/CRM |
+| 15 | Renombrar `BACKUP` → `GRUPO_BACKUP` | 1 | `core/config.py`, callers | Inconsistencia de naming. Rename mecánico con grep |
+| 16 | Mover mensajes del CRM a JSON externo | 2 | `flows/crm/crm_worker.py`, `contenido/` | Los 7 mensajes hardcodeados en `get_message()` → `contenido/crm_messages.json` |
+| 17 | Mover `mensajes_fecha` a JSON externo | 3 | `flows/broadcast/broadcast.py`, `contenido/` | Feriados hardcodeados en Python → `contenido/mensajes_fecha.json` |
+| 18 | Mover listados de tickers a archivo separado | 2 | `core/alerts.py` → `core/tickers.py` | 200+ tickers hardcodeados en `alerts.py` |
+| 19 | Deploy limits (memoria/CPU) | 2 | `docker-compose.yml` | Agregar `deploy: resources: limits` a cada servicio Python |
+| 20 | Crear `core/exceptions.py` | 2 | `core/exceptions.py` | Excepciones custom en vez de `Exception` genérica |
 
 ---
 
-## FASE 4 — Testing y DevOps
+## 🔵 P3 — Bajo (mejoras incrementales, sin urgencia)
 
 | # | Item | Dif | Archivos | Descripción |
 |---|------|:---:|----------|-------------|
-| 25 | Tests de integración | 4 | `tests/` | Al menos 5 tests que mockeen el pipeline completo (inbound → Sheets → Redis → Evolution) |
-| 26 | CI/CD con GitHub Actions | 4 | `.github/workflows/` | Pipeline: lint → test → build. Deploy manual |
-| 27 | Cobertura de código | 2 | `pytest.ini`, CI | Agregar `pytest-cov` al pipeline, meta 70%+ |
-| 28 | Exportar leads a CSV | 2 | `core/sheets_client.py` | Función `exportar_csv()` para reporting manual sin abrir Sheets |
+| 21 | Agregar type hints a funciones públicas | 2 | Todos los `core/` y `flows/` | Proyecto inconsistente con `from __future__ import annotations` |
+| 22 | Logging estructurado | 3 | Todos los servicios | `structlog` o JSON logging para debugging en producción |
+| 23 | Exportar leads a CSV | 2 | `core/sheets_client.py` | Función `exportar_csv()` para reporting manual sin abrir Sheets |
+| 24 | Cobertura de código | 2 | `pytest.ini`, CI | Agregar `pytest-cov` al pipeline, meta 70%+ |
 
 ---
 
-## FASE 5 — Innovación
+## ⚪ P4 — Futuro (proyectos grandes, valor pero no urgente)
 
 | # | Item | Dif | Archivos | Descripción |
 |---|------|:---:|----------|-------------|
-| 29 | Bot de consultas inteligente | 6 | `flows/inbound/commands.py`, Gemini | Comando `/opinar TICKER` que consulte Gemini con datos de yfinance para dar análisis en tiempo real |
-| 30 | Alertas push personalizadas (watchlist) | 6 | Nuevo Sheet + cron job | El usuario configura tickers de interés (`/seguir AAPL GGAL`), recibe alerta privada si movimiento >2% |
-| 31 | Simulador de cartera | 7 | Nuevo Sheet + cron job | `/cartera AAPL:30%,GGAL:20%` → análisis semanal de rentabilidad ficticia con yfinance |
+| 25 | Dashboard de métricas para admin | 4 | Nuevo endpoint o script | Leads hoy, trials activos, conversiones Trial→Pago, bajas del mes |
+| 26 | Segmentación por perfil | 4 | Inbound + CRM + Broadcast | Preguntar en onboarding qué le interesa y filtrar contenido |
+| 27 | Tests de integración | 4 | `tests/` | Pipeline completo mockeado (inbound → Sheets → Redis → Evolution) |
+| 28 | CI/CD con GitHub Actions | 4 | `.github/workflows/` | Pipeline: lint → test → build. Deploy manual |
+| 29 | Bot de consultas inteligente | 6 | `commands.py`, Gemini | Comando `/opinar TICKER` con análisis de Gemini + yfinance |
+| 30 | Alertas push personalizadas (watchlist) | 6 | Nuevo Sheet + cron job | `/seguir AAPL GGAL` → alerta privada si movimiento >2% |
+| 31 | Simulador de cartera | 7 | Nuevo Sheet + cron job | `/cartera AAPL:30%,GGAL:20%` → análisis semanal de rentabilidad |
 
 ---
 
@@ -99,8 +99,8 @@
 
 ## Resumen ejecutivo
 
-- **Total pendientes activos:** 31
-- **Por fase:** Seguridad 2 | Refactor 13 | Negocio 9 | Testing 4 | Innovación 3
+- **Total pendientes:** 31
+- **Por prioridad:** P0 Crítico 5 | P1 Alto 6 | P2 Medio 9 | P3 Bajo 4 | P4 Futuro 7
 - **Dificultad promedio:** 2.5/10
-- **Items más urgentes:** #1-2 (bugs + seguridad)
-- **Mayor impacto de negocio:** #18 (check-in día 1), #19 (auto-bajas), #23 (frecuencia mensajes)
+- **Impacto inmediato:** P0 (#1-5) → producción estable y segura
+- **Mayor ROI de negocio:** P1 (#6-11) → retención y monitoreo de usuarios
